@@ -40,10 +40,10 @@ namespace util {
 	 */
 #ifdef _WIN32
 	void APIENTRY glDebugCallback(GLenum src, GLenum type, GLuint id, GLenum severity,
-		GLsizei len, const GLchar *msg, GLvoid *user);
+		GLsizei len, const GLchar *msg, const GLvoid *user);
 #else
 	void glDebugCallback(GLenum src, GLenum type, GLuint id, GLenum severity,
-		GLsizei len, const GLchar *msg, GLvoid *user);
+		GLsizei len, const GLchar *msg, const GLvoid *user);
 #endif
 	/*
 	* Load an OBJ model file into the vbo and ebo passed in
