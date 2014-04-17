@@ -31,6 +31,12 @@ endif()
 
 find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
+# On windows we need to find GLM too
+if (WIN32)
+	find_package(GLM REQUIRED)
+	include_directories(${GLM_INCLUDE_DIRS})
+endif()
+
 include_directories(include ${entityx_DIR}/include ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
 add_subdirectory(src)
 
