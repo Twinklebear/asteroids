@@ -67,12 +67,12 @@ GLint util::loadProgram(const std::vector<std::tuple<GLenum, std::string>> &shad
 			}
 			return -1;
 		}
+		glshaders.push_back(h);
 	}
 	GLuint program = glCreateProgram();
 	for (GLuint s : glshaders){
 		glAttachShader(program, s);
 	}
-
 	glLinkProgram(program);
 	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
