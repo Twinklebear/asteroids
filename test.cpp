@@ -42,10 +42,11 @@ struct AlignedSizeOf<Align, T> {
 	static const size_t value = sizeof(T) % Align == 0 ? sizeof(T) : sizeof(T) + Align - sizeof(T) % Align;
 };
 
+//TODO: Need a way to find type by index
 //Find the offset by the index
 template<int I, size_t Align, typename T, typename... List>
 struct AlignedOffsetOfIndex {
-	static_assert(I < sizeof...(List), "AlignedOffsetOfIndex index out of bounds");
+	static_assert(I < sizeof...(List) + 1, "AlignedOffsetOfIndex index out of bounds");
 	static const int64_t value = AlignedOffsetOfIndex<I-1, Align, List...>::value != -1 ?
 		AlignedSizeOf<Align, T>::value + AlignedOffsetOfIndex<I-1, Align, List...>::value
 		: -1;
@@ -61,7 +62,6 @@ struct AlignedOffsetOfIndex<0, Align, T> {
 //If I > 0 and there's only one item left in the list the index is out of bounds
 template<int I, size_t Align, typename T>
 struct AlignedOffsetOfIndex<I, Align, T> {
-	static_assert(false, "AlignedOffsetOfIndex index of bounds");
 	static const int64_t value = -1;
 };
 
