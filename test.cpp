@@ -38,12 +38,15 @@ template<typename T>
 struct SizeOf<T> {
 	static const size_t value = sizeof(T);
 };
-//Get the size in bytes of the arguments padded out to the nearest multiple of the alignment
+//Get the size in bytes of the arguments with each argument at the desired alignment
 template<size_t Align, typename T, typename... Args>
 struct AlignedSizeOf {
-	static const size_t value = (sizeof(T) + SizeOf<Args...>::value) % Align == 0 ?
-		sizeof(T) + SizeOf<Args...>::value
-		: sizeof(T) + SizeOf<Args...>::value + Align - (sizeof(T) + SizeOf<Args...>::value) % Align;
+	static const size_t value = AlignedSizeOf<Align, Args...>::value
+		+ (sizeof(T) % Align == 0 ? sizeof(T) : sizeof(T) + Align - sizeof(T) % Align);
+};
+template<size_t Align, typename T>
+struct AlignedSizeOf<Align, T> {
+	static const size_t value = sizeof(T) % Align == 0 ? sizeof(T) : sizeof(T) + Align - sizeof(T) % Align;
 };
 
 template<typename T, typename A, typename... List>
@@ -99,8 +102,8 @@ int main(int argc, char **argv){
 	std::cout << "char: " << sizeof(char) << ", size % 4=" << sizeof(char) % 4 << "\n"
 		<< "int: " << sizeof(int) << ", size % 4=" << sizeof(int) % 4 << "\n";
 	std::cout << "SizeOf<int, float, char>: " << SizeOf<int, float, char>::value << "\n"
-		<< "AlignedSizeOf<int, float, char>: " << AlignedSizeOf<4, int, float, char>::value << "\n"
-		<< "AlignedSizeOf<int16_t, int16_t, int16_t>: "
+		<< "AlignedSizeOf<4, int, float, char>: " << AlignedSizeOf<4, int, float, char>::value << "\n"
+		<< "AlignedSizeOf<4, int16_t, int16_t, int16_t>: "
 		<< AlignedSizeOf<4, int16_t, int16_t, int16_t>::value << "\n";
 
 	InterleavedArray<int, float, char> array(2);
