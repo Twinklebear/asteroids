@@ -2,6 +2,26 @@
 #include <cassert>
 #include <type_traits>
 
+template<int N, int I = 0>
+class For {
+	enum { go = I < N };
+
+public:
+	static void f(){
+		std::cout << "Loop " << I << "\n";
+		For<N, go ? (I + 1) : N>::f();
+	}
+};
+template<int N>
+class For<N, N> {
+public:
+	static void f(){
+		std::cout << "Loop end\n";
+	}
+};
+
+
+
 //Get the total size in bytes of the arguments
 template<typename T, typename... Args>
 struct SizeOf {
@@ -20,6 +40,29 @@ struct AlignedSizeOf {
 template<size_t Align, typename T>
 struct AlignedSizeOf<Align, T> {
 	static const size_t value = sizeof(T) % Align == 0 ? sizeof(T) : sizeof(T) + Align - sizeof(T) % Align;
+};
+
+//Find the offset by the index
+template<int I, size_t Align, typename T, typename... List>
+struct AlignedOffsetOfIndex {
+	static_assert(I < sizeof...(List), "AlignedOffsetOfIndex index out of bounds");
+	static const int64_t value = AlignedOffsetOfIndex<I-1, Align, List...>::value != -1 ?
+		AlignedSizeOf<Align, T>::value + AlignedOffsetOfIndex<I-1, Align, List...>::value
+		: -1;
+};
+template<size_t Align, typename T, typename... List>
+struct AlignedOffsetOfIndex<0, Align, T, List...> {
+	static const int64_t value = 0;
+};
+template<size_t Align, typename T>
+struct AlignedOffsetOfIndex<0, Align, T> {
+	static const int64_t value = 0;
+};
+//If I > 0 and there's only one item left in the list the index is out of bounds
+template<int I, size_t Align, typename T>
+struct AlignedOffsetOfIndex<I, Align, T> {
+	static_assert(false, "AlignedOffsetOfIndex index of bounds");
+	static const int64_t value = -1;
 };
 
 //Would also need indexed offset of to get offset by index instead of by type
@@ -108,6 +151,8 @@ int main(int argc, char **argv){
 		<< AlignedSizeOf<4, int16_t, int16_t, int16_t>::value << "\n";
 	std::cout << "AlignedOffsetOf<4, float, int, char, float>: "
 		<< AlignedOffsetOf<4, float, int, char, float>::value << "\n";
+	std::cout << "AlignedOffsetOfIndex<1, int16_t, int16_t, int16_t>: "
+		<< AlignedOffsetOfIndex<2, 4, int16_t, int16_t, int16_t>::value << "\n";
 
 	InterleavedArray<int, float, char> array(2);
 	array.at<int>(0) = 10;
