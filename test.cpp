@@ -2,33 +2,6 @@
 #include <cassert>
 #include <type_traits>
 
-template<int N, int I = 0>
-class For {
-	enum { go = I < N };
-
-public:
-	static void f(){
-		std::cout << "Loop " << I << "\n";
-		For<N, go ? (I + 1) : N>::f();
-	}
-};
-template<int N>
-class For<N, N> {
-public:
-	static void f(){
-		std::cout << "Loop end\n";
-	}
-};
-
-template<long N>
-struct binary {
-	static const long value = binary<N/10>::value << 1 | N % 10;
-};
-template<>
-struct binary<0> {
-	static const long value = 0;
-};
-
 //Get the total size in bytes of the arguments
 template<typename T, typename... Args>
 struct SizeOf {
@@ -47,6 +20,34 @@ struct AlignedSizeOf {
 template<size_t Align, typename T>
 struct AlignedSizeOf<Align, T> {
 	static const size_t value = sizeof(T) % Align == 0 ? sizeof(T) : sizeof(T) + Align - sizeof(T) % Align;
+};
+
+//Would also need indexed offset of to get offset by index instead of by type
+template<size_t Align, typename T, typename A, typename... List>
+struct AlignedOffsetOf;
+template<bool same, size_t Align, typename T, typename A, typename... List>
+struct AlignedOffsetOfHelper;
+template<size_t Align, typename T, typename A, typename... List>
+struct AlignedOffsetOfHelper<true, Align, T, A, List...> {
+	static const int64_t value = 0;
+};
+template<size_t Align, typename T, typename A, typename... List>
+struct AlignedOffsetOfHelper<false, Align, T, A, List...> {
+	static const int64_t value = AlignedOffsetOf<Align, T, List...>::value != -1 ?
+		AlignedSizeOf<Align, T>::value + AlignedOffsetOf<Align, T, List...>::value : -1;
+};
+template<size_t Align, typename T, typename A>
+struct AlignedOffsetOfHelper<true, Align, T, A> {
+	static const int64_t value = 0;
+};
+template<size_t Align, typename T, typename A>
+struct AlignedOffsetOfHelper<false, Align, T, A> {
+	static const int64_t value = -1;
+};
+//Get the offset in bytes of some type in the list
+template<size_t Align, typename T, typename A, typename... List>
+struct AlignedOffsetOf {
+	static const int64_t value = AlignedOffsetOfHelper<std::is_same<T, A>::value, Align, T, A, List...>::value;
 };
 
 template<typename T, typename A, typename... List>
@@ -105,6 +106,8 @@ int main(int argc, char **argv){
 		<< "AlignedSizeOf<4, int, float, char>: " << AlignedSizeOf<4, int, float, char>::value << "\n"
 		<< "AlignedSizeOf<4, int16_t, int16_t, int16_t>: "
 		<< AlignedSizeOf<4, int16_t, int16_t, int16_t>::value << "\n";
+	std::cout << "AlignedOffsetOf<4, float, int, char, float>: "
+		<< AlignedOffsetOf<4, float, int, char, float>::value << "\n";
 
 	InterleavedArray<int, float, char> array(2);
 	array.at<int>(0) = 10;
