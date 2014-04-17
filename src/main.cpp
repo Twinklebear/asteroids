@@ -42,7 +42,7 @@ int main(int argc, char **argv){
 		<< "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << "\n";
 
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-	glDebugMessageCallbackARB(util::glDebugCallback, NULL);
+	glDebugMessageCallbackARB(util::gldebug_callback, NULL);
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
@@ -65,7 +65,7 @@ int main(int argc, char **argv){
 		glVertexAttribDivisor(i, 1);
 	}
 
-	GLint program = util::loadProgram({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
+	GLint program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
 		std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
 	if (program == -1){
 		glDeleteVertexArrays(1, &vao);

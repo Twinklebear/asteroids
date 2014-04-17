@@ -11,7 +11,7 @@
 #include "gl_core_3_3.h"
 #include "util.h"
 
-std::string util::readFile(const std::string &fName){
+std::string util::read_file(const std::string &fName){
 	std::ifstream file(fName);
 	if (!file.is_open()){
 		std::cout << "Failed to open file: " << fName << std::endl;
@@ -20,9 +20,9 @@ std::string util::readFile(const std::string &fName){
 	return std::string((std::istreambuf_iterator<char>(file)),
 		std::istreambuf_iterator<char>());
 }
-GLint util::loadShader(GLenum type, const std::string &file){
+GLint util::load_shader(GLenum type, const std::string &file){
 	GLuint shader = glCreateShader(type);
-	std::string src = readFile(file);
+	std::string src = read_file(file);
 	const char *csrc = src.c_str();
 	glShaderSource(shader, 1, &csrc, 0);
 	glCompileShader(shader);
@@ -56,10 +56,10 @@ GLint util::loadShader(GLenum type, const std::string &file){
 	}
 	return shader;
 }
-GLint util::loadProgram(const std::vector<std::tuple<GLenum, std::string>> &shaders){
+GLint util::load_program(const std::vector<std::tuple<GLenum, std::string>> &shaders){
 	std::vector<GLuint> glshaders;
 	for (const std::tuple<GLenum, std::string> &s : shaders){
-		GLint h = loadShader(std::get<0>(s), std::get<1>(s));
+		GLint h = load_shader(std::get<0>(s), std::get<1>(s));
 		if (h == -1){
 			std::cerr << "loadProgram: A required shader failed to compile, aborting\n";
 			for (GLuint g : glshaders){
@@ -95,7 +95,7 @@ GLint util::loadProgram(const std::vector<std::tuple<GLenum, std::string>> &shad
 	}
 	return program;
 }
-GLuint util::loadTexture(const std::string &file){
+GLuint util::load_texture(const std::string &file){
 	SDL_Surface *surf = SDL_LoadBMP(file.c_str());
 	//TODO: Throw an error?
 	if (!surf){
@@ -136,7 +136,7 @@ GLuint util::loadTexture(const std::string &file){
 	SDL_FreeSurface(surf);
 	return tex;
 }
-bool util::logGLError(const std::string &msg){
+bool util::log_glerror(const std::string &msg){
 	GLenum err = glGetError();
 	if (err != GL_NO_ERROR){
 		std::cerr << "OpenGL Error: ";
@@ -165,10 +165,10 @@ bool util::logGLError(const std::string &msg){
 	return false;
 }
 #if _MSC_VER
-void APIENTRY util::glDebugCallback(GLenum src, GLenum type, GLuint id, GLenum severity,
+void APIENTRY util::gldebug_callback(GLenum src, GLenum type, GLuint id, GLenum severity,
 	GLsizei len, const GLchar *msg, const GLvoid *user)
 #else
-void util::glDebugCallback(GLenum src, GLenum type, GLuint id, GLenum severity,
+void util::gldebug_callback(GLenum src, GLenum type, GLuint id, GLenum severity,
 	GLsizei len, const GLchar *msg, const GLvoid *user)
 #endif
 {
@@ -228,7 +228,7 @@ void util::glDebugCallback(GLenum src, GLenum type, GLuint id, GLenum severity,
 	}
 	std::cout << ":\n\t" << msg << "\n";
 }
-bool util::loadOBJ(const std::string &fName, GLuint &vbo, GLuint &ebo, size_t &nElems){
+bool util::load_OBJ(const std::string &fName, GLuint &vbo, GLuint &ebo, size_t &nElems){
 	std::ifstream file(fName);
 	if (!file.is_open()){
 		std::cout << "Failed to find obj file: " << fName << std::endl;
@@ -253,18 +253,18 @@ bool util::loadOBJ(const std::string &fName, GLuint &vbo, GLuint &ebo, size_t &n
 		else if (line.at(0) == 'v'){
 			//positions
 			if (line.at(1) == ' '){
-				tmpPos.push_back(captureVec3(line));
+				tmpPos.push_back(capture_vec3(line));
 			}
 			else if (line.at(1) == 't'){
-				tmpUv.push_back(captureVec2(line));
+				tmpUv.push_back(capture_vec2(line));
 			}
 			else if (line.at(1) == 'n'){
-				tmpNorm.push_back(captureVec3(line));
+				tmpNorm.push_back(capture_vec3(line));
 			}
 		}
 		//Parse faces
 		else if (line.at(0) == 'f'){
-			std::array<std::string, 3> face = captureFaces(line);
+			std::array<std::string, 3> face = capture_faces(line);
 			for (std::string &v : face){
 				auto fnd = vertexIndices.find(v);
 				//If we find the vertex already in the list re-use the index
@@ -273,7 +273,7 @@ bool util::loadOBJ(const std::string &fName, GLuint &vbo, GLuint &ebo, size_t &n
 					indices.push_back(fnd->second);
 				}
 				else {
-					std::array<unsigned int, 3> vertex = captureVertex(v);
+					std::array<unsigned int, 3> vertex = capture_vertex(v);
 					//Pack the position, normal and uv into the vertex data, note that obj data is
 					//1-indexed so we subtract 1
 					vertexData.push_back(tmpPos[vertex[0] - 1]);
@@ -293,20 +293,19 @@ bool util::loadOBJ(const std::string &fName, GLuint &vbo, GLuint &ebo, size_t &n
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLushort), &indices[0], GL_STATIC_DRAW);
-
 	return true;
 }
-glm::vec2 util::captureVec2(const std::string &str){
+glm::vec2 util::capture_vec2(const std::string &str){
 	glm::vec2 vec;
 	sscanf(str.c_str(), "%*s %f %f", &vec.x, &vec.y);
 	return vec;
 }
-glm::vec3 util::captureVec3(const std::string &str){
+glm::vec3 util::capture_vec3(const std::string &str){
 	glm::vec3 vec;
 	sscanf(str.c_str(), "%*s %f %f %f", &vec.x, &vec.y, &vec.z);
 	return vec;
 }
-std::array<std::string, 3> util::captureFaces(const std::string &str){
+std::array<std::string, 3> util::capture_faces(const std::string &str){
 	std::array<std::string, 3> faces;
 	//There's face information between each space in the string, and 3 faces total
 	size_t prev = str.find(" ", 0);
@@ -318,7 +317,7 @@ std::array<std::string, 3> util::captureFaces(const std::string &str){
 	}
 	return faces;
 }
-std::array<unsigned int, 3> util::captureVertex(const std::string &str){
+std::array<unsigned int, 3> util::capture_vertex(const std::string &str){
 	std::array<unsigned int, 3> vertex;
 	sscanf(str.c_str(), "%u/%u/%u", &vertex[0], &vertex[1], &vertex[2]);
 	return vertex;
