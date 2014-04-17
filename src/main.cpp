@@ -13,19 +13,22 @@ struct Position : entityx::Component<Position> {
 	Position(float x, float y) : x(x), y(y) {}
 };
 
-//Simple render batch with a fixed capacity. Each instance only has a distinct model matrix
-class RenderBatch {
+/**
+ * A fixed capacity render batch, each instance only has a distinct model matrix
+ * items can be removed but order will not be preserved
+ */
+class ArrayBatch {
 	size_t size, capacity;
 	//Should also add a vbo here to hold the model being drawn
 	//but since I'm generating the triangles in the shader skip for now
 	GLuint vao, matrices, program;
 
 public:
-	RenderBatch(size_t capacity, GLuint program)
+	ArrayBatch(size_t capacity, GLuint program)
 		: size(0), capacity(capacity), vao(0), matrices(0), program(program){
 		//Defer creating buffers until an object is added
 	}
-	~RenderBatch(){
+	~ArrayBatch(){
 		if (vao != 0){
 			glDeleteVertexArrays(1, &vao);
 			glDeleteBuffers(1, &matrices);
@@ -35,7 +38,7 @@ public:
 	//Add a list of objects to be drawn
 	void add_objects(const std::vector<glm::mat4> &objs){
 		if (size + objs.size() > capacity){
-			std::cerr << "Too many objects to insert into batch, aborting\n";
+			std::cerr << "Too many objects to insert into batch\n";
 			return;
 		}
 		if (vao == 0){
@@ -49,13 +52,25 @@ public:
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 		size += objs.size();
 	}
+	//Remove the object at some index, this does not preserve render order
+	void remove(size_t i){
+		if (size == 0){
+			std::cerr << "Attempt to delete object on empty batch\n";
+			return;
+		}
+		glBindBuffer(GL_ARRAY_BUFFER, matrices);
+		glm::mat4 *mats = static_cast<glm::mat4*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+		std::swap(mats[i], mats[size - 1]);
+		--size;
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+	}
 	//Set the attribute index to send matrices too
 	void set_attrib_index(unsigned attrib){
 		glBindVertexArray(vao);
 		for (unsigned i = attrib; i < attrib + 4; ++i){
 			glEnableVertexAttribArray(i);
 			glVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4),
-					(void*)(sizeof(glm::vec4) * i));
+				(void*)(sizeof(glm::vec4) * i));
 			glVertexAttribDivisor(i, 1);
 		}
 	}
@@ -117,7 +132,7 @@ int main(int argc, char **argv){
 		SDL_Quit();
 		return 1;
 	}
-	RenderBatch batch(4, program);
+	ArrayBatch batch(4, program);
 	std::vector<glm::mat4> matrices = {
 		glm::translate<GLfloat>(-0.5f, 0.f, 0.f) * glm::scale<GLfloat>(0.5f, 0.5f, 1.f),
 		glm::translate<GLfloat>(0.5f, 0.f, 0.f) * glm::scale<GLfloat>(0.5f, 0.5f, 1.f),
@@ -127,15 +142,28 @@ int main(int argc, char **argv){
 	batch.add_objects(matrices);
 	batch.set_attrib_index(0);
 
-	glClear(GL_COLOR_BUFFER_BIT);
-	batch.render();
+	bool quit = false;
+	while (!quit){
+		SDL_Event e;
+		while (SDL_PollEvent(&e)){
+			if (e.type == SDL_QUIT || e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE){
+				quit = true;
+				break;
+			}
+			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_w){
+				batch.remove(0);
+			}
+		}
 
-	GLenum err = glGetError();
-	if (err != GL_NO_ERROR){
-		std::cerr << "OpenGL Error: " << std::hex << err << std::dec << "\n";
+		glClear(GL_COLOR_BUFFER_BIT);
+		batch.render();
+
+		GLenum err = glGetError();
+		if (err != GL_NO_ERROR){
+			std::cerr << "OpenGL Error: " << std::hex << err << std::dec << "\n";
+		}
+		SDL_GL_SwapWindow(win);
 	}
-	SDL_GL_SwapWindow(win);
-	SDL_Delay(1000);
 
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);
