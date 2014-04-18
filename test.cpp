@@ -3,26 +3,6 @@
 #include <type_traits>
 #include <typeinfo>
 
-template<int N, int I = 0>
-class For {
-	enum { go = I < N };
-
-public:
-	static void f(){
-		std::cout << "Loop " << I << "\n";
-		For<N, go ? (I + 1) : N>::f();
-	}
-};
-template<int N>
-class For<N, N> {
-public:
-	static void f(){
-		std::cout << "Loop end\n";
-	}
-};
-
-
-
 //Get the total size in bytes of the arguments
 template<typename T, typename... Args>
 struct SizeOf {
