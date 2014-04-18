@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <type_traits>
+#include <typeinfo>
 
 template<int N, int I = 0>
 class For {
@@ -43,6 +44,16 @@ struct AlignedSizeOf<Align, T> {
 };
 
 //TODO: Need a way to find type by index
+template<int I, typename T, typename... List>
+struct TypeAt {
+	static_assert(I < sizeof...(List) + 1, "TypeAt index out of bounds");
+	using type = typename TypeAt<I-1, List...>::type;
+};
+template<typename T, typename... List>
+struct TypeAt<0, T, List...> {
+	using type = T;
+};
+
 //Find the offset by the index
 template<int I, size_t Align, typename T, typename... List>
 struct AlignedOffsetOfIndex {
@@ -153,6 +164,12 @@ int main(int argc, char **argv){
 		<< AlignedOffsetOf<4, float, int, char, float>::value << "\n";
 	std::cout << "AlignedOffsetOfIndex<1, int16_t, int16_t, int16_t>: "
 		<< AlignedOffsetOfIndex<2, 4, int16_t, int16_t, int16_t>::value << "\n";
+
+	using TA = TypeAt<0, float, int, char>::type;
+	using TB = TypeAt<1, float, int, char>::type;
+	using TC = TypeAt<2, float, int, char>::type;
+	static_assert(std::is_same<TA, float>::value && std::is_same<TB, int>::value
+		&& std::is_same<TC, char>::value, "TypeAt failure");
 
 	InterleavedArray<int, float, char> array(2);
 	array.at<int>(0) = 10;
