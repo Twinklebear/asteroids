@@ -143,8 +143,6 @@ public:
 };
 
 int main(int argc, char **argv){
-	std::cout << "char: " << sizeof(char) << ", size % 4=" << sizeof(char) % 4 << "\n"
-		<< "int: " << sizeof(int) << ", size % 4=" << sizeof(int) % 4 << "\n";
 	std::cout << "SizeOf<int, float, char>: " << SizeOf<int, float, char>::value << "\n"
 		<< "AlignedSizeOf<4, int, float, char>: " << AlignedSizeOf<4, int, float, char>::value << "\n"
 		<< "AlignedSizeOf<4, int16_t, int16_t, int16_t>: "
