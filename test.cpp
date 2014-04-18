@@ -43,7 +43,6 @@ struct AlignedSizeOf<Align, T> {
 	static const size_t value = sizeof(T) % Align == 0 ? sizeof(T) : sizeof(T) + Align - sizeof(T) % Align;
 };
 
-//TODO: Need a way to find type by index
 template<int I, typename T, typename... List>
 struct TypeAt {
 	static_assert(I > -1 && I < sizeof...(List) + 1, "TypeAt index out of bounds");
