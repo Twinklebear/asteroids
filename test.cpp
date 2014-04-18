@@ -46,11 +46,11 @@ struct AlignedSizeOf<Align, T> {
 template<int I, typename T, typename... List>
 struct TypeAt {
 	static_assert(I > -1 && I < sizeof...(List) + 1, "TypeAt index out of bounds");
-	typedef typename TypeAt<I-1, List...>::type type;
+	using type = typename TypeAt<I-1, List...>::type;
 };
 template<typename T, typename... List>
 struct TypeAt<0, T, List...> {
-	typedef T type;
+	using type = T;
 };
 
 //Find the offset by the index
@@ -72,6 +72,7 @@ struct AlignedOffsetOfIndex<0, Align, T> {
 //If I > 0 and there's only one item left in the list the index is out of bounds
 template<int I, size_t Align, typename T>
 struct AlignedOffsetOfIndex<I, Align, T> {
+	//Should there be a static assert here?
 	static const int64_t value = -1;
 };
 
