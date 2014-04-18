@@ -128,6 +128,15 @@ public:
 		T *t = static_cast<T*>(static_cast<void*>(data + offset + i * SizeOf<Args...>::value));
 		return *t;
 	}
+	template<size_t I>
+	typename TypeAt<I, Args...>::type& at(size_t i){
+		assert(i < sz);
+		using T = typename TypeAt<I, Args...>::type;
+		static_assert(AlignedOffsetOfIndex<I, 1, T, Args...>::value != -1, "Type not in array");
+		size_t offset = AlignedOffsetOfIndex<I, 1, T, Args...>::value;
+		T *t = static_cast<T*>(static_cast<void*>(data + offset + i * SizeOf<Args...>::value));
+		return *t;
+	}
 	size_t size() const {
 		return sz;
 	}
@@ -164,6 +173,7 @@ int main(int argc, char **argv){
 			<< ", float=" << array.at<float>(i)
 			<< ", char=" << array.at<char>(i) << "\n";
 	}
+	std::cout << "Data item 1 @ 0: " << array.at<1>(0) << "\n";
 	return 0;
 }
 
