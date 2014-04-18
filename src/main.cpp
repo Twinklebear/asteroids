@@ -2,6 +2,7 @@
 #include <tuple>
 #include <SDL.h>
 #include <entityx/entityx.h>
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include "gl_core_3_3.h"
@@ -134,10 +135,14 @@ int main(int argc, char **argv){
 	}
 	ArrayBatch batch(4, program);
 	std::vector<glm::mat4> matrices = {
-		glm::translate<GLfloat>(-0.5f, 0.f, 0.f) * glm::scale<GLfloat>(0.5f, 0.5f, 1.f),
-		glm::translate<GLfloat>(0.5f, 0.f, 0.f) * glm::scale<GLfloat>(0.5f, 0.5f, 1.f),
-		glm::translate<GLfloat>(0.0f, 0.5f, 0.f) * glm::scale<GLfloat>(0.5f, 0.5f, 1.f),
-		glm::translate<GLfloat>(0.0f, -0.5f, 0.f) * glm::scale<GLfloat>(0.5f, 0.5f, 1.f)
+		glm::translate(glm::vec3{-0.5f, 0.f, 0.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
+		glm::translate(glm::vec3{0.5f, 0.f, 0.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
+		glm::translate(glm::vec3{0.0f, 0.5f, 0.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
+		glm::translate(glm::vec3{0.0f, -0.5f, 0.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f})
 	};
 	batch.add_objects(matrices);
 	batch.set_attrib_index(0);
