@@ -123,7 +123,8 @@ public:
 		assert(i < sz);
 		static_assert(OffsetOf<T, Args...>::value != -1, "Type not in array");
 		size_t offset = OffsetOf<T, Args...>::value;
-		T *t = static_cast<T*>(static_cast<void*>(&data[0] + offset + i * SizeOf<Args...>::value));
+		//Note: When interacting with the GL buffer (void*) we'd just use static cast
+		T *t = reinterpret_cast<T*>(&data[0] + offset + i * SizeOf<Args...>::value);
 		return *t;
 	}
 	template<size_t I>
@@ -132,7 +133,8 @@ public:
 		using T = typename TypeAt<I, Args...>::type;
 		static_assert(AlignedOffsetOfIndex<I, 1, T, Args...>::value != -1, "Type not in array");
 		size_t offset = AlignedOffsetOfIndex<I, 1, T, Args...>::value;
-		T *t = static_cast<T*>(static_cast<void*>(&data[0] + offset + i * SizeOf<Args...>::value));
+		//Note: When interacting with the GL buffer (void*) we'd just use static cast
+		T *t = reinterpret_cast<T*>(&data[0] + offset + i * SizeOf<Args...>::value);
 		return *t;
 	}
 	size_t size() const {
