@@ -111,6 +111,84 @@ struct OffsetOf {
 	static const int64_t value = OffsetOfHelper<std::is_same<T, A>::value, T, A, List...>::value;
 };
 
+template<typename... List>
+struct TestSize;
+template<typename A, typename B, typename... List>
+struct TestSize<A, B, List...> {
+	//static const size_t size = sizeof(A) + sizeof(B);
+	static void f(size_t prev = 0){
+		std::cout << "A = '" << typeid(A).name() << "', B = '" << typeid(B).name() << "'\n"
+			<< "sizeof(A)=" << sizeof(A) << ", alignof(B)=" << alignof(B) << "\n"
+			<< "prev size=" << prev << "\n";
+		prev += sizeof(A);
+		std::cout << "Unpadded size=" << prev << ", ";
+		prev = prev % alignof(B) == 0 ? prev
+			: prev + alignof(B) - prev % alignof(B);
+		std::cout << "Size with possible padding=" << prev << "\n\n";
+		TestSize<B, List...>::f(prev);
+	}
+};
+template<typename A, typename B>
+struct TestSize<A, B> {
+	static void f(size_t prev = 0){
+		std::cout << "A = '" << typeid(A).name() << "', B = '" << typeid(B).name() << "'\n"
+			<< "sizeof(A)=" << sizeof(A) << ", alignof(B)=" << alignof(B) << "\n"
+			<< "prev size=" << prev << "\n";
+		prev += sizeof(A);
+		std::cout << "Unpadded size=" << prev << ", ";
+		prev = prev % alignof(B) == 0 ? prev
+			: prev + alignof(B) - prev % alignof(B);
+		std::cout << "Size with padding=" << prev << "\n\n";
+		TestSize<B>::f(prev);
+	}
+};
+template<typename A>
+struct TestSize<A> {
+	static void f(size_t prev = 0){
+		std::cout << "A = '" << typeid(A).name() << "'\n"
+			<< "Final size=" << prev + sizeof(A) << "\n\n";
+	}
+};
+
+template<int I, typename... List>
+struct TestOffset;
+template<int I, typename A, typename B, typename... List>
+struct TestOffset<I, A, B, List...> {
+	//static const size_t size = sizeof(A) + sizeof(B);
+	static void f(size_t prev = 0){
+		std::cout << "A = '" << typeid(A).name() << "', B = '" << typeid(B).name() << "'\n"
+			<< "sizeof(A)=" << sizeof(A) << ", alignof(B)=" << alignof(B) << "\n"
+			<< "prev size=" << prev << "\n";
+		prev += sizeof(A);
+		std::cout << "Unpadded size=" << prev << ", ";
+		prev = prev % alignof(B) == 0 ? prev
+			: prev + alignof(B) - prev % alignof(B);
+		std::cout << "Offset with possible padding=" << prev << "\n\n";
+		TestOffset<I - 1, B, List...>::f(prev);
+	}
+};
+template<int I, typename A, typename B>
+struct TestOffset<I, A, B> {
+	static void f(size_t prev = 0){
+		std::cout << "A = '" << typeid(A).name() << "', B = '" << typeid(B).name() << "'\n"
+			<< "sizeof(A)=" << sizeof(A) << ", alignof(B)=" << alignof(B) << "\n"
+			<< "prev size=" << prev << "\n";
+		prev += sizeof(A);
+		std::cout << "Unpadded size=" << prev << ", ";
+		prev = prev % alignof(B) == 0 ? prev
+			: prev + alignof(B) - prev % alignof(B);
+		std::cout << "Offset with padding=" << prev << "\n\n";
+		TestOffset<I - 1, B>::f(prev);
+	}
+};
+template<typename... List>
+struct TestOffset<0, List...> {
+	static void f(size_t prev = 0){
+		std::cout << "Offset of item=" << prev << "\n";
+	}
+};
+
+
 template<typename... Args>
 class InterleavedArray {
 	size_t sz;
@@ -143,14 +221,8 @@ public:
 };
 
 int main(int argc, char **argv){
-	std::cout << "SizeOf<int, float, char>: " << SizeOf<int, float, char>::value << "\n"
-		<< "AlignedSizeOf<4, int, float, char>: " << AlignedSizeOf<4, int, float, char>::value << "\n"
-		<< "AlignedSizeOf<4, int16_t, int16_t, int16_t>: "
-		<< AlignedSizeOf<4, int16_t, int16_t, int16_t>::value << "\n";
-	std::cout << "AlignedOffsetOf<4, float, int, char, float>: "
-		<< AlignedOffsetOf<4, float, int, char, float>::value << "\n";
-	std::cout << "AlignedOffsetOfIndex<1, int16_t, int16_t, int16_t>: "
-		<< AlignedOffsetOfIndex<2, 4, int16_t, int16_t, int16_t>::value << "\n";
+	//This doesn't work for getting the 0th offset
+	TestOffset<1, int, double>::f();
 
 	using TA = TypeAt<0, float, int, char>::type;
 	using TB = TypeAt<1, float, int, char>::type;
@@ -158,20 +230,6 @@ int main(int argc, char **argv){
 	static_assert(std::is_same<TA, float>::value && std::is_same<TB, int>::value
 		&& std::is_same<TC, char>::value, "TypeAt failure");
 
-	InterleavedArray<int, float, char> array(2);
-	array.at<int>(0) = 10;
-	array.at<int>(1) = 20;
-	array.at<float>(0) = 15.f;
-	array.at<float>(1) = 5.f;
-	array.at<char>(0) = 'A';
-	array.at<char>(1) = 'B';
-	for (size_t i = 0; i < array.size(); ++i){
-		std::cout << "Data at " << i
-			<< ": int=" << array.at<int>(i)
-			<< ", float=" << array.at<float>(i)
-			<< ", char=" << array.at<char>(i) << "\n";
-	}
-	std::cout << "Data item 1 @ 0: " << array.at<1>(0) << "\n";
 	return 0;
 }
 
