@@ -146,7 +146,7 @@ int main(int argc, char **argv){
 	while (!quit){
 		SDL_Event e;
 		while (SDL_PollEvent(&e)){
-			if (e.type == SDL_QUIT || e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE){
+			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)){
 				quit = true;
 				break;
 			}
