@@ -2,6 +2,7 @@
 #define INTERLEAVED_BUFFER_H
 
 #include <cassert>
+#include <memory>
 #include "gl_core_3_3.h"
 #include "typeutils.h"
 
@@ -9,7 +10,7 @@
 template<typename... Args>
 class InterleavedBuffer {
 	size_t capacity, stride_;
-	GLuint buffer;
+	std::shared_ptr<GLuint> buffer;
 	GLenum mode, type, access;
 	char *data;
 
@@ -18,20 +19,26 @@ public:
 		mode(0), type(0), access(0), data(nullptr)
 	{}
 	InterleavedBuffer(size_t capacity, GLenum type, GLenum access)
-		: capacity(capacity), stride_(detail::Size<Args...>::size()), buffer(0),
-		mode(0), type(type), access(access), data(nullptr)
+		: capacity(capacity), stride_(detail::Size<Args...>::size()),
+		buffer(nullptr), mode(0), type(type), access(access), data(nullptr)
 	{
-		glGenBuffers(1, &buffer);
-		glBindBuffer(type, buffer);
+		buffer = std::shared_ptr<GLuint>(new GLuint{0}, buffer_delete);
+		glGenBuffers(1, &(*buffer));
+		glBindBuffer(type, *buffer);
 		glBufferData(type, capacity * stride_, NULL, access);
 	}
 	~InterleavedBuffer(){
-		if (buffer != 0){
-			glDeleteBuffers(1, &buffer);
+		//If they forgot to unmap the buffer
+		if (data != nullptr){
+			glBindBuffer(GL_ARRAY_BUFFER, *buffer);
+			glUnmapBuffer(GL_ARRAY_BUFFER);
 		}
 	}
 	void bind(){
-		glBindBuffer(type, buffer);
+		glBindBuffer(type, *buffer);
+	}
+	void bind(GLenum target){
+		glBindBuffer(target, *buffer);
 	}
 	void map(GLenum m){
 		bind();
@@ -74,6 +81,9 @@ private:
 		size_t offset = detail::Offset<I, Args...>::offset();
 		T *t = reinterpret_cast<T*>(data + offset + i * stride_);
 		return *t;
+	}
+	static void buffer_delete(GLuint *b){
+		glDeleteBuffers(1, b);
 	}
 };
 
