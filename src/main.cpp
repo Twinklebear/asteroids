@@ -47,19 +47,17 @@ public:
 		matrices.unmap();
 		size += objs.size();
 	}
-	//Remove the object at some index, this does not preserve render order
 	void remove(size_t i){
 		if (size == 0){
 			std::cerr << "Attempt to delete object on empty batch\n";
 			return;
 		}
+		assert(i < size);
 		matrices.map(GL_WRITE_ONLY);
-		glm::mat4 &a = matrices.write<0>(i);
-		int &a_color = matrices.write<1>(i);
-		glm::mat4 &b = matrices.write<0>(size - 1);
-		int &b_color = matrices.write<1>(size - 1);
-		std::swap(a, b);
-		std::swap(a_color, b_color);
+		for (size_t j = i; j < size - 1; ++j){
+			matrices.write<0>(j) = matrices.write<0>(j + 1);
+			matrices.write<1>(j) = matrices.write<1>(j + 1);
+		}
 		matrices.unmap();
 		--size;
 	}
