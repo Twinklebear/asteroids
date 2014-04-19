@@ -47,33 +47,33 @@ public:
 	const typename detail::TypeAt<I, Args...>::type& read(size_t i) const {
 		assert(i < capacity && data != nullptr
 			&& (mode == GL_READ_ONLY || mode == GL_READ_WRITE));
-		using T = typename detail::TypeAt<I, Args...>::type;
-		size_t offset = detail::Offset<I, Args...>::offset();
-		T *t = static_cast<T*>(static_cast<void*>(data + offset + i * stride_));
-		return *t;
+		return get<I>(i);
 	}
 	template<size_t I>
 	typename detail::TypeAt<I, Args...>::type& write(size_t i){
 		assert(i < capacity && data != nullptr
 			&& (mode == GL_WRITE_ONLY || mode == GL_READ_WRITE));
-		using T = typename detail::TypeAt<I, Args...>::type;
-		size_t offset = detail::Offset<I, Args...>::offset();
-		T *t = static_cast<T*>(static_cast<void*>(data + offset + i * stride_));
-		return *t;
+		return get<I>(i);
 	}
 	template<size_t I>
 	typename detail::TypeAt<I, Args...>::type& at(size_t i){
 		assert(i < capacity && data != nullptr && mode == GL_READ_WRITE);
-		using T = typename detail::TypeAt<I, Args...>::type;
-		size_t offset = detail::Offset<I, Args...>::offset();
-		T *t = static_cast<T*>(static_cast<void*>(data + offset + i * stride_));
-		return *t;
+		return get<I>(i);
 	}
 	size_t size() const {
 		return capacity;
 	}
 	size_t stride() const {
 		return stride_;
+	}
+
+private:
+	template<size_t I>
+	typename detail::TypeAt<I, Args...>::type& get(size_t i){
+		using T = typename detail::TypeAt<I, Args...>::type;
+		size_t offset = detail::Offset<I, Args...>::offset();
+		T *t = reinterpret_cast<T*>(data + offset + i * stride_);
+		return *t;
 	}
 };
 
