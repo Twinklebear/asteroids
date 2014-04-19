@@ -59,16 +59,31 @@ void run(SDL_Window *win){
 		return;
 	}
 	glUseProgram(program);
+	//TODO We don't properly support std140 for vec3/mat3 types. Does glm have the
+	//right size/align for them?
+	InterleavedBuffer<glm::mat4> viewing(2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	viewing.map(GL_WRITE_ONLY);
+	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 5.f}, glm::vec3{0.f, 0.f, 0.f},
+		glm::vec3{0.f, 1.f, 0.f});
+	viewing.write<0>(1) = glm::perspective(75.f * 0.01745f, 640.f/480, 1.f, 100.f);
+	GLuint viewing_block = glGetUniformBlockIndex(program, "Viewing");
+	if (viewing_block == GL_INVALID_INDEX){
+		std::cerr << "Failed to find Viewing uniform block\n";
+		glDeleteProgram(program);
+		return;
+	}
+	glUniformBlockBinding(program, viewing_block, 0);
+	viewing.bind_base(0);
 
 	RenderBatch batch(4);
 	std::vector<glm::mat4> matrices = {
-		glm::translate(glm::vec3{-0.5f, 0.f, 0.f})
+		glm::translate(glm::vec3{-0.5f, 0.f, 1.f})
 			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
-		glm::translate(glm::vec3{0.5f, 0.f, 0.f})
+		glm::translate(glm::vec3{0.5f, 0.f, 1.f})
 			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
-		glm::translate(glm::vec3{0.0f, 0.5f, 0.f})
+		glm::translate(glm::vec3{0.0f, 0.5f, 1.f})
 			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
-		glm::translate(glm::vec3{0.0f, -0.5f, 0.f})
+		glm::translate(glm::vec3{0.0f, -0.5f, 1.f})
 			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f})
 	};
 	batch.push_back(matrices);
@@ -104,7 +119,7 @@ void run(SDL_Window *win){
 					batch.update(updates);
 				}
 				if (e.key.keysym.sym == SDLK_e){
-					matrices.push_back(glm::translate(glm::vec3{0.f, 0.f, 0.f})
+					matrices.push_back(glm::translate(glm::vec3{0.f, 0.f, 1.f})
 						* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}));
 					batch.push_back(matrices.back());
 					batch.set_attrib_index(0);

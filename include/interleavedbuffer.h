@@ -40,6 +40,9 @@ public:
 	void bind(GLenum target){
 		glBindBuffer(target, *buffer);
 	}
+	void bind_base(int index){
+		glBindBufferBase(type, index, *buffer);
+	}
 	void map(GLenum m){
 		bind();
 		mode = m;
