@@ -21,23 +21,20 @@ struct Size;
 template<typename T, typename... List>
 struct Size<T, List...> {
 	//static const size_t size = sizeof(A) + sizeof(B);
-	static void f(size_t prev = 0){
+	static size_t size(size_t prev = 0){
 		prev += sizeof(T);
-		std::cout << "Unpadded size=" << prev << ", ";
 		prev = prev % alignof(T) == 0 ? prev
 			: prev + alignof(T) - prev % alignof(T);
-		std::cout << "Size with possible padding=" << prev << "\n\n";
-		Size<List...>::f(prev);
+		return Size<List...>::size(prev);
 	}
 };
 template<typename T>
 struct Size<T> {
-	static void f(size_t prev = 0){
+	static size_t size(size_t prev = 0){
 		prev += sizeof(T);
-		std::cout << "Unpadded size=" << prev << ", ";
 		prev = prev % alignof(T) == 0 ? prev
 			: prev + alignof(T) - prev % alignof(T);
-		std::cout << "Size with padding=" << prev << "\n\n";
+		return prev;
 	}
 };
 
@@ -46,23 +43,19 @@ struct Offset;
 template<int I, typename T, typename... List>
 struct Offset<I, T, List...> {
 	static_assert(I < sizeof...(List) + 1, "Offset index out of bounds");
-	static void f(size_t prev = 0){
+	static size_t offset(size_t prev = 0){
 		prev += sizeof(T);
-		std::cout << "Unpadded size=" << prev << ", ";
 		prev = prev % alignof(T) == 0 ? prev
 			: prev + alignof(T) - prev % alignof(T);
-		std::cout << "Offset with possible padding=" << prev << "\n\n";
-		Offset<I - 1, List...>::f(prev);
+		return Offset<I - 1, List...>::offset(prev);
 	}
 };
 template<typename T, typename... List>
 struct Offset<0, T, List...> {
-	static void f(size_t prev = 0){
-		std::cout << "Unpadded size=" << prev << ", ";
+	static size_t offset(size_t prev = 0){
 		prev = prev % alignof(T) == 0 ? prev
 			: prev + alignof(T) - prev % alignof(T);
-		std::cout << "Offset with possible padding=" << prev << "\n\n";
-		std::cout << "Offset of item=" << prev << "\n";
+		return prev;
 	}
 };
 
@@ -101,8 +94,8 @@ public:
 */
 
 int main(int argc, char **argv){
-	Size<double, char, double>::f();
-	Offset<0, int16_t, double>::f();
+	std::cout << "Computed size: " << Size<int16_t, double>::size() << "\n"
+		<< "Computed offset: " << Offset<1, int16_t, double>::offset() << "\n";
 
 	using TA = TypeAt<0, float, int, char>::type;
 	using TB = TypeAt<1, float, int, char>::type;
