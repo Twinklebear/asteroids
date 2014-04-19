@@ -20,7 +20,6 @@ template<typename... List>
 struct Size;
 template<typename T, typename... List>
 struct Size<T, List...> {
-	//static const size_t size = sizeof(A) + sizeof(B);
 	static size_t size(size_t prev = 0){
 		prev += sizeof(T);
 		prev = prev % alignof(T) == 0 ? prev
@@ -59,43 +58,42 @@ struct Offset<0, T, List...> {
 	}
 };
 
-
-/*
 template<typename... Args>
 class InterleavedArray {
-	size_t sz;
 	std::vector<char> data;
 
 public:
-	InterleavedArray(size_t size) : sz(size), data(sz * SizeOf<Args...>::value){}
-	template<typename T>
-	T& at(size_t i){
-		assert(i < sz);
-		static_assert(OffsetOf<T, Args...>::value != -1, "Type not in array");
-		size_t offset = OffsetOf<T, Args...>::value;
-		//Is there some better way to do this casting? Reinterpret cast might have alignment issues?
-		T *t = static_cast<T*>(static_cast<void*>(&data[0] + offset + i * SizeOf<Args...>::value));
-		return *t;
+	InterleavedArray(size_t size) : data(size * Size<Args...>::size()){
+		data.resize(size);
 	}
+	//Re-implement offset by type index?
 	template<size_t I>
 	typename TypeAt<I, Args...>::type& at(size_t i){
-		assert(i < sz);
+		assert(i < data.size());
 		using T = typename TypeAt<I, Args...>::type;
-		static_assert(AlignedOffsetOfIndex<I, 1, T, Args...>::value != -1, "Type not in array");
-		size_t offset = AlignedOffsetOfIndex<I, 1, T, Args...>::value;
+		size_t offset = Offset<I, T, Args...>::offset();
 		//Is there some better way to do this casting? Reinterpret cast might have alignment issues?
-		T *t = static_cast<T*>(static_cast<void*>(&data[0] + offset + i * SizeOf<Args...>::value));
+		T *t = static_cast<T*>(static_cast<void*>(&data[0] + offset + i * Size<Args...>::size()));
 		return *t;
 	}
 	size_t size() const {
-		return sz;
+		return data.size();
 	}
 };
-*/
 
 int main(int argc, char **argv){
 	std::cout << "Computed size: " << Size<int16_t, double>::size() << "\n"
 		<< "Computed offset: " << Offset<1, int16_t, double>::offset() << "\n";
+
+	InterleavedArray<int16_t, double> array(2);
+	array.at<0>(0) = 5;
+	array.at<0>(1) = 10;
+	array.at<1>(0) = 100.f;
+	array.at<1>(1) = 150.f;
+	for (size_t i = 0; i < array.size(); ++i){
+		std::cout << "array.at<0>(" << i << ")=" << array.at<0>(i)
+			<< "\narray.at<1>(" << i << ")=" << array.at<1>(i) << "\n";
+	}
 
 	using TA = TypeAt<0, float, int, char>::type;
 	using TB = TypeAt<1, float, int, char>::type;
