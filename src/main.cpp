@@ -65,7 +65,7 @@ void run(SDL_Window *win){
 	viewing.map(GL_WRITE_ONLY);
 	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 5.f}, glm::vec3{0.f, 0.f, 0.f},
 		glm::vec3{0.f, 1.f, 0.f});
-	viewing.write<0>(1) = glm::perspective(75.f * 0.01745f, 640.f/480, 1.f, 100.f);
+	viewing.write<0>(1) = glm::perspective(util::deg_to_rad(75), 640.f/480, 1.f, 100.f);
 	GLuint viewing_block = glGetUniformBlockIndex(program, "Viewing");
 	if (viewing_block == GL_INVALID_INDEX){
 		std::cerr << "Failed to find Viewing uniform block\n";

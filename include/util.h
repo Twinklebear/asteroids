@@ -7,6 +7,10 @@
 #include "gl_core_3_3.h"
 
 namespace util {
+	//Convert degrees to radians
+	constexpr float deg_to_rad(float deg){
+		return deg * 0.01745f;
+	}
 	/*
 	* Read the entire contents of a file into a string, if an error occurs
 	* the string will be empty
