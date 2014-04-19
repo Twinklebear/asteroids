@@ -8,95 +8,9 @@
 #include "gl_core_3_3.h"
 #include "util.h"
 #include "interleavedbuffer.h"
+#include "renderbatch.h"
 
-/**
- * A fixed capacity render batch, each instance only has a distinct model matrix
- * items can be removed but order will not be preserved
- */
-class ArrayBatch {
-	size_t size, capacity;
-	//Should also add a vbo here to hold the model being drawn
-	//but since I'm generating the triangles in the shader skip for now
-	GLuint vao, program;
-	InterleavedBuffer<glm::mat4, int> matrices;
-
-public:
-	ArrayBatch(size_t capacity, GLuint program) : size(0), capacity(capacity),
-		vao(0), program(program), matrices(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW)
-	{}
-	~ArrayBatch(){
-		if (vao != 0){
-			glDeleteVertexArrays(1, &vao);
-		}
-		glDeleteProgram(program);
-	}
-	//Add a list of objects to be drawn
-	void add_objects(const std::vector<glm::mat4> &objs){
-		if (size + objs.size() > capacity){
-			std::cerr << "Too many objects to insert into batch\n";
-			return;
-		}
-		if (vao == 0){
-			create_buffer();
-		}
-		matrices.map(GL_WRITE_ONLY);
-		for (size_t i = 0; i < objs.size(); ++i){
-			matrices.write<0>(i + size) = objs[i];
-			matrices.write<1>(i + size) = i % 4;
-		}
-		matrices.unmap();
-		size += objs.size();
-	}
-	void update(const std::vector<std::tuple<size_t, glm::mat4>> &updates){
-		matrices.map(GL_WRITE_ONLY);
-		for (const std::tuple<size_t, glm::mat4> t : updates){
-			size_t i = std::get<0>(t);
-			assert(i < size);
-			matrices.write<0>(i) = std::get<1>(t);
-		}
-		matrices.unmap();
-	}
-	void remove(size_t i){
-		assert(i < size);
-		matrices.map(GL_WRITE_ONLY);
-		for (size_t j = i; j < size - 1; ++j){
-			matrices.write<0>(j) = matrices.write<0>(j + 1);
-			matrices.write<1>(j) = matrices.write<1>(j + 1);
-		}
-		matrices.unmap();
-		--size;
-	}
-	//Set the attribute index to send matrices too
-	void set_attrib_index(unsigned attrib){
-		glBindVertexArray(vao);
-		matrices.bind();
-		for (unsigned i = attrib; i < attrib + 4; ++i){
-			glEnableVertexAttribArray(i);
-			glVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, matrices.stride(),
-				(void*)(sizeof(glm::vec4) * i));
-			glVertexAttribDivisor(i, 1);
-		}
-		glEnableVertexAttribArray(attrib + 4);
-		glVertexAttribIPointer(attrib + 4, 1, GL_INT, matrices.stride(),
-			(void*)(detail::Offset<1, glm::mat4, int>::offset()));
-		glVertexAttribDivisor(attrib + 4, 1);
-	}
-	//Render the batch
-	void render(){
-		glUseProgram(program);
-		glBindVertexArray(vao);
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 3, size);
-	}
-	size_t batch_size() const {
-		return size;
-	}
-
-private:
-	void create_buffer(){
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-	}
-};
+void run(SDL_Window *win);
 
 int main(int argc, char **argv){
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
@@ -131,15 +45,22 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
+	run(win);
+
+	SDL_GL_DeleteContext(context);
+	SDL_DestroyWindow(win);
+	SDL_Quit();
+	return 0;
+}
+void run(SDL_Window *win){
 	GLint program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
 		std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
 	if (program == -1){
-		SDL_GL_DeleteContext(context);
-		SDL_DestroyWindow(win);
-		SDL_Quit();
-		return 1;
+		return;
 	}
-	ArrayBatch batch(4, program);
+	glUseProgram(program);
+
+	RenderBatch batch(4);
 	std::vector<glm::mat4> matrices = {
 		glm::translate(glm::vec3{-0.5f, 0.f, 0.f})
 			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
@@ -150,7 +71,7 @@ int main(int argc, char **argv){
 		glm::translate(glm::vec3{0.0f, -0.5f, 0.f})
 			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f})
 	};
-	batch.add_objects(matrices);
+	batch.push_back(matrices);
 	batch.set_attrib_index(0);
 
 	bool quit = false;
@@ -163,7 +84,8 @@ int main(int argc, char **argv){
 			}
 			if (e.type == SDL_KEYDOWN && batch.batch_size() > 0){
 				if (e.key.keysym.sym == SDLK_w){
-					batch.remove(batch.batch_size() - 1);
+					batch.pop_back();
+					matrices.pop_back();
 				}
 				if (e.key.keysym.sym == SDLK_a){
 					std::vector<std::tuple<size_t, glm::mat4>> updates;
@@ -181,6 +103,12 @@ int main(int argc, char **argv){
 					}
 					batch.update(updates);
 				}
+				if (e.key.keysym.sym == SDLK_e){
+					matrices.push_back(glm::translate(glm::vec3{0.f, 0.f, 0.f})
+						* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}));
+					batch.push_back(matrices.back());
+					batch.set_attrib_index(0);
+				}
 			}
 		}
 
@@ -193,10 +121,6 @@ int main(int argc, char **argv){
 		}
 		SDL_GL_SwapWindow(win);
 	}
-
-	SDL_GL_DeleteContext(context);
-	SDL_DestroyWindow(win);
-	SDL_Quit();
-	return 0;
+	glDeleteProgram(program);
 }
 
