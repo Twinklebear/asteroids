@@ -47,11 +47,16 @@ public:
 		matrices.unmap();
 		size += objs.size();
 	}
-	void remove(size_t i){
-		if (size == 0){
-			std::cerr << "Attempt to delete object on empty batch\n";
-			return;
+	void update(const std::vector<std::tuple<size_t, glm::mat4>> &updates){
+		matrices.map(GL_WRITE_ONLY);
+		for (const std::tuple<size_t, glm::mat4> t : updates){
+			size_t i = std::get<0>(t);
+			assert(i < size);
+			matrices.write<0>(i) = std::get<1>(t);
 		}
+		matrices.unmap();
+	}
+	void remove(size_t i){
 		assert(i < size);
 		matrices.map(GL_WRITE_ONLY);
 		for (size_t j = i; j < size - 1; ++j){
@@ -81,6 +86,9 @@ public:
 		glUseProgram(program);
 		glBindVertexArray(vao);
 		glDrawArraysInstanced(GL_TRIANGLES, 0, 3, size);
+	}
+	size_t batch_size() const {
+		return size;
 	}
 
 private:
@@ -153,8 +161,26 @@ int main(int argc, char **argv){
 				quit = true;
 				break;
 			}
-			if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_w){
-				batch.remove(0);
+			if (e.type == SDL_KEYDOWN && batch.batch_size() > 0){
+				if (e.key.keysym.sym == SDLK_w){
+					batch.remove(batch.batch_size() - 1);
+				}
+				if (e.key.keysym.sym == SDLK_a){
+					std::vector<std::tuple<size_t, glm::mat4>> updates;
+					for (size_t i = 0; i < batch.batch_size(); ++i){
+						matrices[i] = glm::translate(glm::vec3{-0.01f, 0.f, 0.f}) * matrices[i];
+						updates.push_back(std::make_tuple(i, matrices[i]));
+					}
+					batch.update(updates);
+				}
+				if (e.key.keysym.sym == SDLK_d){
+					std::vector<std::tuple<size_t, glm::mat4>> updates;
+					for (size_t i = 0; i < batch.batch_size(); ++i){
+						matrices[i] = glm::translate(glm::vec3{0.01f, 0.f, 0.f}) * matrices[i];
+						updates.push_back(std::make_tuple(i, matrices[i]));
+					}
+					batch.update(updates);
+				}
 			}
 		}
 
