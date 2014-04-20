@@ -58,7 +58,10 @@ public:
 	const typename detail::TypeAt<I, Args...>::type& read(size_t i) const {
 		assert(i < capacity && data != nullptr
 			&& (mode == GL_READ_ONLY || mode == GL_READ_WRITE));
-		return get<I>(i);
+		using T = typename detail::TypeAt<I, Args...>::type;
+		size_t offset = detail::Offset<I, Args...>::offset();
+		T *t = reinterpret_cast<T*>(data + offset + i * stride_);
+		return *t;
 	}
 	template<size_t I>
 	typename detail::TypeAt<I, Args...>::type& write(size_t i){
