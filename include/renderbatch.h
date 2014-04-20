@@ -4,21 +4,22 @@
 #include <glm/glm.hpp>
 #include "gl_core_3_3.h"
 #include "interleavedbuffer.h"
+#include "model.h"
 
 /*
- * Implements instanced rendering where each instance has its
- * own model matrix. TODO: Can be optionally given a configured
- * vao and model to render
+ * Implements instanced rendering of a model where each instance has its
+ * own model matrix
  */
 class RenderBatch {
 	size_t size, capacity;
-	GLuint vao;
-	//TODO: Arbitrary instance data support?
+	Model model;
 	InterleavedBuffer<glm::mat4> matrices;
 
 public:
-	RenderBatch(size_t capacity);
-	~RenderBatch();
+	/*
+	 * Create a render batch with some capacity for the passed in model
+	 */
+	RenderBatch(size_t capacity, Model model);
 	/*
 	 * Add instances to be drawn. If the new size exceeds the instance
 	 * data buffer capacity it will be re-size (an expensive operation)
@@ -48,8 +49,6 @@ public:
 	void set_attrib_index(unsigned attrib);
 	/*
 	 * Render the batch
-	 * TODO: We need more information about the model structure to
-	 * know if we should bind an element buffer, how many triangles, etc
 	 */
 	void render();
 	size_t batch_size() const;

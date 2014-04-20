@@ -1,10 +1,12 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <vector>
 #include <array>
 #include <string>
 #include <glm/glm.hpp>
 #include "gl_core_3_3.h"
+#include "interleavedbuffer.h"
 
 namespace util {
 	//Convert degrees to radians
@@ -52,13 +54,12 @@ namespace util {
 	/*
 	* Load an OBJ model file into the vbo and ebo passed in
 	* The model must have vertex, texture and normal data and be a triangle mesh
-	* vbo & ebo should be already created and will be filled with the model data
-	* vbo should be GL_ARRAY_BUFFER and ebo should be GL_ELEMENT_ARRAY_BUFFER, data will
-	* be written with GL_STATIC_DRAW, the element indices will be stored as GL_UNSIGNED_SHORT
-	* The vbo will be packed: vec3 pos, vec3 normal, vec3 uv
+	* The vbo elems are: vec3 pos, vec3 normal, vec3 uv
 	* returns true on success, false on failure
 	*/
-	bool load_OBJ(const std::string &fName, GLuint &vbo, GLuint &ebo, size_t &nElems);
+	bool load_obj(const std::string &fname,
+		InterleavedBuffer<glm::vec3, glm::vec3, glm::vec3> &vbo,
+		InterleavedBuffer<GLushort> &ebo, size_t &n_elems);
 	/*
 	* Functions to get values from formatted strings, for use in reading the
 	* model file

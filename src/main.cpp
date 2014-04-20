@@ -9,6 +9,7 @@
 #include "util.h"
 #include "interleavedbuffer.h"
 #include "renderbatch.h"
+#include "model.h"
 
 void run(SDL_Window *win);
 
@@ -70,6 +71,7 @@ void run(SDL_Window *win){
 	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 5.f}, glm::vec3{0.f, 0.f, 0.f},
 		glm::vec3{0.f, 1.f, 0.f});
 	viewing.write<0>(1) = glm::perspective(util::deg_to_rad(75), 640.f/480, 1.f, 100.f);
+	viewing.unmap();
 	GLuint viewing_block = glGetUniformBlockIndex(program, "Viewing");
 	if (viewing_block == GL_INVALID_INDEX){
 		std::cerr << "Failed to find Viewing uniform block\n";
@@ -79,19 +81,12 @@ void run(SDL_Window *win){
 	glUniformBlockBinding(program, viewing_block, 0);
 	viewing.bind_base(0);
 
-	RenderBatch batch(4);
+	RenderBatch batch(4, Model("../res/polyhedron.obj"));
 	std::vector<glm::mat4> matrices = {
-		glm::translate(glm::vec3{-0.5f, 0.f, 1.f})
-			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
-		glm::translate(glm::vec3{0.5f, 0.f, 1.f})
-			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
-		glm::translate(glm::vec3{0.0f, 0.5f, 1.f})
-			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
-		glm::translate(glm::vec3{0.0f, -0.5f, 1.f})
-			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f})
+		glm::mat4()
 	};
 	batch.push_back(matrices);
-	batch.set_attrib_index(0);
+	batch.set_attrib_index(3);
 
 	bool quit = false;
 	while (!quit){
@@ -124,7 +119,7 @@ void run(SDL_Window *win){
 				}
 				if (e.key.keysym.sym == SDLK_e){
 					matrices.push_back(glm::translate(glm::vec3{0.f, 0.f, 1.f})
-						* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}));
+						* glm::scale(glm::vec3{0.5f, 0.5f, 0.5f}));
 					batch.push_back(matrices.back());
 					batch.set_attrib_index(0);
 				}

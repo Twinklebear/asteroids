@@ -1,18 +1,20 @@
 #version 330 core
 
-const vec4 verts[3] = vec4[3](
-	vec4(0.f, 0.5f, 0.f, 1.f),
-	vec4(-0.5f, -0.5f, 0.f, 1.f),
-	vec4(0.5f, -0.5f, 0.f, 1.f)
-);
-
 layout(std140) uniform Viewing {
 	mat4 view, proj;
 };
 
-layout(location = 0) in mat4 model;
+layout(location = 0) in vec3 pos;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec2 uv;
+layout(location = 3) in mat4 model;
+
+out vec3 fnormal;
+out vec2 fuv;
 
 void main(void){
-	gl_Position = proj * view * model * verts[gl_VertexID];
+	fnormal = normal;
+	fuv = uv;
+	gl_Position = proj * view * vec4(pos, 1.f);
 }
 
