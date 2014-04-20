@@ -112,7 +112,7 @@ GLuint util::load_texture(const std::string &file){
 		}
 		else {
 			format = GL_BGRA;
-		}		
+		}
 	}
 	else {
 		internal = GL_RGB;
@@ -132,7 +132,6 @@ GLuint util::load_texture(const std::string &file){
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
 	SDL_FreeSurface(surf);
 	return tex;
 }
@@ -176,72 +175,75 @@ void util::gldebug_callback(GLenum src, GLenum type, GLuint id, GLenum severity,
 	float sec = SDL_GetTicks() / 1000.f;
 	int min = static_cast<int>(sec / 60.f);
 	sec -= sec / 60.f;
-	std::cout << "[" << min << ":"
+	std::cerr << "[" << min << ":"
 		<< std::setprecision(3) << sec << "] OpenGL Debug -";
 	switch (severity){
 	case GL_DEBUG_SEVERITY_HIGH_ARB:
-		std::cout << " High severity";
+		std::cerr << " High severity";
 		break;
 	case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-		std::cout << " Medium severity";
+		std::cerr << " Medium severity";
 		break;
 	case GL_DEBUG_SEVERITY_LOW_ARB:
-		std::cout << " Low severity";
+		std::cerr << " Low severity";
 	}
 	switch (src){
 	case GL_DEBUG_SOURCE_API_ARB:
-		std::cout << " API";
+		std::cerr << " API";
 		break;
 	case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
-		std::cout << " Window system";
+		std::cerr << " Window system";
 		break;
 	case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
-		std::cout << " Shader compiler";
+		std::cerr << " Shader compiler";
 		break;
 	case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
-		std::cout << " Third party";
+		std::cerr << " Third party";
 		break;
 	case GL_DEBUG_SOURCE_APPLICATION_ARB:
-		std::cout << " Application";
+		std::cerr << " Application";
 		break;
 	default:
-		std::cout << " Other";
+		std::cerr << " Other";
 	}
 	switch (type){
 	case GL_DEBUG_TYPE_ERROR_ARB:
-		std::cout << " Error";
+		std::cerr << " Error";
 		break;
 	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
-		std::cout << " Deprecated behavior";
+		std::cerr << " Deprecated behavior";
 		break;
 	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
-		std::cout << " Undefined behavior";
+		std::cerr << " Undefined behavior";
 		break;
 	case GL_DEBUG_TYPE_PORTABILITY_ARB:
-		std::cout << " Portability";
+		std::cerr << " Portability";
 		break;
 	case GL_DEBUG_TYPE_PERFORMANCE_ARB:
-		std::cout << " Performance";
+		std::cerr << " Performance";
 		break;
 	default:
-		std::cout << " Other";
+		std::cerr << " Other";
 	}
-	std::cout << ":\n\t" << msg << "\n";
+	std::cerr << ":\n\t" << msg << "\n";
 }
-bool util::load_OBJ(const std::string &fName, GLuint &vbo, GLuint &ebo, size_t &nElems){
-	std::ifstream file(fName);
+bool util::load_obj(const std::string &fname,
+	InterleavedBuffer<glm::vec3, glm::vec3, glm::vec3> &vbo,
+	InterleavedBuffer<GLushort> &ebo, size_t &n_elems)
+{
+	std::ifstream file(fname);
 	if (!file.is_open()){
-		std::cout << "Failed to find obj file: " << fName << std::endl;
+		std::cout << "Failed to find obj file: " << fname << std::endl;
 		return false;
 	}
 
 	//Temporary storage for the data we read in
-	std::vector<glm::vec3> tmpPos, tmpNorm;
-	std::vector<glm::vec2> tmpUv;
+	std::vector<glm::vec3> tmp_pos, tmp_norm;
+	std::vector<glm::vec2> tmp_uv;
 	//A map to associate a unique vertex with its index
-	std::map<std::string, GLushort> vertexIndices;
+	std::map<std::string, GLushort> vert_indices;
 	//The final ordered packed vertices and indices
-	std::vector<glm::vec3> vertexData;
+	std::vector<glm::vec3> vert_data;
 	std::vector<GLushort> indices;
 
 	std::string line;
@@ -253,46 +255,55 @@ bool util::load_OBJ(const std::string &fName, GLuint &vbo, GLuint &ebo, size_t &
 		else if (line.at(0) == 'v'){
 			//positions
 			if (line.at(1) == ' '){
-				tmpPos.push_back(capture_vec3(line));
+				tmp_pos.push_back(capture_vec3(line));
 			}
 			else if (line.at(1) == 't'){
-				tmpUv.push_back(capture_vec2(line));
+				tmp_uv.push_back(capture_vec2(line));
 			}
 			else if (line.at(1) == 'n'){
-				tmpNorm.push_back(capture_vec3(line));
+				tmp_norm.push_back(capture_vec3(line));
 			}
 		}
 		//Parse faces
 		else if (line.at(0) == 'f'){
 			std::array<std::string, 3> face = capture_faces(line);
 			for (std::string &v : face){
-				auto fnd = vertexIndices.find(v);
+				auto fnd = vert_indices.find(v);
 				//If we find the vertex already in the list re-use the index
 				//If not we create a new vertex and index
-				if (fnd != vertexIndices.end()){
+				if (fnd != vert_indices.end()){
 					indices.push_back(fnd->second);
 				}
 				else {
 					std::array<unsigned int, 3> vertex = capture_vertex(v);
 					//Pack the position, normal and uv into the vertex data, note that obj data is
 					//1-indexed so we subtract 1
-					vertexData.push_back(tmpPos[vertex[0] - 1]);
-					vertexData.push_back(tmpNorm[vertex[2] - 1]);
-					vertexData.push_back(glm::vec3(tmpUv[vertex[1] - 1], 0));
+					vert_data.push_back(tmp_pos[vertex[0] - 1]);
+					vert_data.push_back(tmp_norm[vertex[2] - 1]);
+					vert_data.push_back(glm::vec3(tmp_uv[vertex[1] - 1], 0));
 					//Store the new index, also subract 1 b/c size 1 => idx 0
 					//and divide by 3 b/c there are 3 components per vertex
-					indices.push_back((vertexData.size() - 1) / 3);
-					vertexIndices[v] = indices.back();
+					indices.push_back((vert_data.size() - 1) / 3);
+					vert_indices[v] = indices.back();
 				}
 			}
 		}
 	}
-	nElems = indices.size();
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(glm::vec3), &vertexData[0], GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLushort), &indices[0], GL_STATIC_DRAW);
+	n_elems = indices.size();
+	vbo = InterleavedBuffer<glm::vec3, glm::vec3, glm::vec3>(n_elems, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+	vbo.map(GL_WRITE_ONLY);
+	for (size_t i = 0; i < n_elems; ++i){
+		vbo.write<0>(i) = vert_data[3 * i];
+		vbo.write<1>(i) = vert_data[3 * i + 1];
+		vbo.write<2>(i) = vert_data[3 * i + 2];
+	}
+	vbo.unmap();
+	ebo = InterleavedBuffer<GLushort>(n_elems, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+	ebo.map(GL_WRITE_ONLY);
+	for (size_t i = 0; i < indices.size(); ++i){
+		ebo.write<0>(i) = indices[i];
+	}
+	ebo.unmap();
 	return true;
 }
 glm::vec2 util::capture_vec2(const std::string &str){
