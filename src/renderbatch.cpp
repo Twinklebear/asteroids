@@ -5,15 +5,11 @@
 #include "gl_core_3_3.h"
 #include "interleavedbuffer.h"
 #include "renderbatch.h"
+#include "model.h"
 
-RenderBatch::RenderBatch(size_t capacity) : size(0), capacity(capacity),
-	vao(0), matrices(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW)
-{
-	glGenVertexArrays(1, &vao);
-}
-RenderBatch::~RenderBatch(){
-	glDeleteVertexArrays(1, &vao);
-}
+RenderBatch::RenderBatch(size_t capacity, Model model) : size(0), capacity(capacity),
+	model(model), matrices(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW)
+{}
 void RenderBatch::push_back(const std::vector<glm::mat4> &objs){
 	if (size + objs.size() > capacity){
 		resize_buffer();
@@ -56,18 +52,18 @@ void RenderBatch::remove(size_t i){
 	--size;
 }
 void RenderBatch::set_attrib_index(unsigned attrib){
-	glBindVertexArray(vao);
+	model.bind();
 	matrices.bind();
-	for (unsigned i = attrib; i < attrib + 4; ++i){
-		glEnableVertexAttribArray(i);
-		glVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, matrices.stride(),
-				(void*)(sizeof(glm::vec4) * i));
-		glVertexAttribDivisor(i, 1);
+	for (unsigned i = 0; i < 4; ++i){
+		glEnableVertexAttribArray(i + attrib);
+		glVertexAttribPointer(i + attrib, 4, GL_FLOAT, GL_FALSE, matrices.stride(),
+			(void*)(sizeof(glm::vec4) * i));
+		glVertexAttribDivisor(i + attrib, 1);
 	}
 }
 void RenderBatch::render(){
-	glBindVertexArray(vao);
-	glDrawArraysInstanced(GL_TRIANGLES, 0, 3, size);
+	model.bind();
+	glDrawElementsInstanced(GL_TRIANGLES, model.elems(), GL_UNSIGNED_SHORT, 0, size);
 }
 size_t RenderBatch::batch_size() const {
 	return size;

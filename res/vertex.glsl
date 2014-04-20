@@ -15,6 +15,6 @@ out vec2 fuv;
 void main(void){
 	fnormal = normal;
 	fuv = uv;
-	gl_Position = proj * view * vec4(pos, 1.f);
+	gl_Position = proj * view * model * vec4(pos, 1.f);
 }
 

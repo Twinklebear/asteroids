@@ -83,7 +83,14 @@ void run(SDL_Window *win){
 
 	RenderBatch batch(4, Model("../res/polyhedron.obj"));
 	std::vector<glm::mat4> matrices = {
-		glm::mat4()
+		glm::translate(glm::vec3{-0.5f, 0.f, 1.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
+		glm::translate(glm::vec3{0.5f, 0.f, 1.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
+		glm::translate(glm::vec3{0.0f, 0.5f, 1.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
+		glm::translate(glm::vec3{0.0f, -0.5f, 1.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f})
 	};
 	batch.push_back(matrices);
 	batch.set_attrib_index(3);
@@ -121,7 +128,7 @@ void run(SDL_Window *win){
 					matrices.push_back(glm::translate(glm::vec3{0.f, 0.f, 1.f})
 						* glm::scale(glm::vec3{0.5f, 0.5f, 0.5f}));
 					batch.push_back(matrices.back());
-					batch.set_attrib_index(0);
+					batch.set_attrib_index(3);
 				}
 			}
 		}
