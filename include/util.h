@@ -56,10 +56,11 @@ namespace util {
 	* The model must have vertex, texture and normal data and be a triangle mesh
 	* The vbo elems are: vec3 pos, vec3 normal, vec3 uv
 	* returns true on success, false on failure
+	* TODO: Take any buffer layout?
 	*/
 	bool load_obj(const std::string &fname,
-		InterleavedBuffer<glm::vec3, glm::vec3, glm::vec3> &vbo,
-		InterleavedBuffer<GLushort> &ebo, size_t &n_elems);
+		InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3> &vbo,
+		InterleavedBuffer<Layout::ALIGNED, GLushort> &ebo, size_t &n_elems);
 	/*
 	* Functions to get values from formatted strings, for use in reading the
 	* model file

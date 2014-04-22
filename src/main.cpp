@@ -65,8 +65,9 @@ void run(SDL_Window *win){
 	}
 	glUseProgram(program);
 	//TODO We don't properly support std140 for vec3/mat3 types. Does glm have the
-	//right size/align for them?
-	InterleavedBuffer<glm::mat4> viewing(2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	//right size/align for them? This will work currently since the glm::mat4's will
+	//align correctly by accident
+	InterleavedBuffer<Layout::PACKED, glm::mat4> viewing(2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 	viewing.map(GL_WRITE_ONLY);
 	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 5.f}, glm::vec3{0.f, 0.f, 0.f},
 		glm::vec3{0.f, 1.f, 0.f});

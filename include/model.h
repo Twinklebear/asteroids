@@ -10,8 +10,8 @@
  */
 class Model {
 	std::shared_ptr<GLuint> vao;
-	InterleavedBuffer<glm::vec3, glm::vec3, glm::vec3> vbo;
-	InterleavedBuffer<GLushort> ebo;
+	InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3> vbo;
+	InterleavedBuffer<Layout::ALIGNED, GLushort> ebo;
 	size_t n_elems;
 
 public:

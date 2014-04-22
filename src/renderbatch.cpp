@@ -71,11 +71,11 @@ size_t RenderBatch::batch_size() const {
 void RenderBatch::resize_buffer(){
 	std::cerr << "Performance warning: RenderBatch attribute buffer resizing, consider making it bigger\n";
 	capacity *= 2;
-	InterleavedBuffer<glm::mat4> new_mat(capacity, GL_ARRAY_BUFFER,	GL_STREAM_DRAW);
+	InterleavedBuffer<Layout::ALIGNED, glm::mat4> new_mat(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW);
 	new_mat.bind(GL_COPY_WRITE_BUFFER);
 	matrices.bind(GL_COPY_READ_BUFFER);
 	glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
-			size * detail::Size<glm::mat4>::size());
+			size * detail::Size<Layout::ALIGNED, glm::mat4>::size());
 	matrices = new_mat;
 }
 

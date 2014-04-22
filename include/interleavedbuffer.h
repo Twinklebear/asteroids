@@ -5,22 +5,29 @@
 #include <memory>
 #include "gl_core_3_3.h"
 #include "deleters.h"
-#include "typeutils.h"
+#include "type_at.h"
+#include "buffer_size.h"
+#include "buffer_offset.h"
 
 //A fixed capacity interleaved buffer stored on the device
-template<typename... Args>
+template<Layout L, typename... Args>
 class InterleavedBuffer {
 	size_t capacity, stride_;
 	std::shared_ptr<GLuint> buffer;
 	GLenum mode, type, access;
 	char *data;
 
+	using Size = detail::Size<L, Args...>;
+	template<int I>
+	using Offset = detail::Offset<I, L, Args...>;
+	
+
 public:
 	InterleavedBuffer() : capacity(capacity), stride_(0), buffer(nullptr),
 		mode(0), type(0), access(0), data(nullptr)
 	{}
 	InterleavedBuffer(size_t capacity, GLenum type, GLenum access)
-		: capacity(capacity), stride_(detail::Size<Args...>::size()),
+		: capacity(capacity), stride_(Size::size()),
 		buffer(nullptr), mode(0), type(type), access(access), data(nullptr)
 	{
 		buffer = std::shared_ptr<GLuint>(new GLuint{0}, detail::delete_buffer);
@@ -59,7 +66,7 @@ public:
 		assert(i < capacity && data != nullptr
 			&& (mode == GL_READ_ONLY || mode == GL_READ_WRITE));
 		using T = typename detail::TypeAt<I, Args...>::type;
-		size_t offset = detail::Offset<I, Args...>::offset();
+		size_t offset = Offset<I>::offset();
 		T *t = reinterpret_cast<T*>(data + offset + i * stride_);
 		return *t;
 	}
@@ -85,7 +92,7 @@ private:
 	template<size_t I>
 	typename detail::TypeAt<I, Args...>::type& get(size_t i){
 		using T = typename detail::TypeAt<I, Args...>::type;
-		size_t offset = detail::Offset<I, Args...>::offset();
+		size_t offset = Offset<I>::offset();
 		T *t = reinterpret_cast<T*>(data + offset + i * stride_);
 		return *t;
 	}

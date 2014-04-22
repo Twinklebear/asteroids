@@ -14,7 +14,7 @@ class RenderBatch {
 	size_t size, capacity;
 	Model model;
 	GLuint vao_test;
-	InterleavedBuffer<glm::mat4> matrices;
+	InterleavedBuffer<Layout::ALIGNED, glm::mat4> matrices;
 
 public:
 	/*
