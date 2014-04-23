@@ -56,6 +56,7 @@ public:
 	void map(GLenum m){
 		bind();
 		mode = m;
+		map_start = 0;
 		data = static_cast<char*>(glMapBuffer(type, mode));
 	}
 	void map_range(size_t start, size_t length, int flags){
@@ -77,7 +78,6 @@ public:
 		mode = 0;
 		data = nullptr;
 		map_end = 0;
-		map_start = 0;
 		bind();
 		glUnmapBuffer(type);
 	}
