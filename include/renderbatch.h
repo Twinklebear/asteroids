@@ -11,7 +11,7 @@
  * own model matrix
  */
 class RenderBatch {
-	size_t size, capacity;
+	size_t size;
 	Model model;
 	GLuint vao_test;
 	InterleavedBuffer<Layout::ALIGNED, glm::mat4> matrices;

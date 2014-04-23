@@ -7,11 +7,11 @@
 #include "renderbatch.h"
 #include "model.h"
 
-RenderBatch::RenderBatch(size_t capacity, Model model) : size(0), capacity(capacity),
+RenderBatch::RenderBatch(size_t capacity, Model model) : size(0),
 	model(model), matrices(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW)
 {}
 void RenderBatch::push_back(const std::vector<glm::mat4> &objs){
-	if (size + objs.size() > capacity){
+	if (size + objs.size() > matrices.size()){
 		resize_buffer();
 	}
 	matrices.map(GL_WRITE_ONLY);
@@ -22,7 +22,7 @@ void RenderBatch::push_back(const std::vector<glm::mat4> &objs){
 	size += objs.size();
 }
 void RenderBatch::push_back(const glm::mat4 &mat){
-	if (size + 1 > capacity){
+	if (size + 1 > matrices.size()){
 		resize_buffer();
 	}
 	matrices.map(GL_WRITE_ONLY);
@@ -75,8 +75,8 @@ size_t RenderBatch::batch_size() const {
 }
 void RenderBatch::resize_buffer(){
 	std::cerr << "Performance warning: RenderBatch attribute buffer resizing, consider making it bigger\n";
-	capacity *= 2;
-	InterleavedBuffer<Layout::ALIGNED, glm::mat4> new_mat(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW);
+	InterleavedBuffer<Layout::ALIGNED, glm::mat4> new_mat(2 * matrices.size(), GL_ARRAY_BUFFER,
+		GL_STREAM_DRAW);
 	new_mat.bind(GL_COPY_WRITE_BUFFER);
 	matrices.bind(GL_COPY_READ_BUFFER);
 	glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
