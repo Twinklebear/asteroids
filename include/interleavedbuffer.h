@@ -69,7 +69,7 @@ public:
 			length * stride_, flags));
 	}
 	void flush_range(size_t start, size_t length){
-		assert(map_end > 0 && map_start <= start && start + length <= map_end
+		assert(map_end > 0 && map_start <= start && start + length < map_end
 			&& (mode & GL_MAP_FLUSH_EXPLICIT_BIT));
 		bind();
 		glFlushMappedBufferRange(type, start * stride_, (start + length) * stride_);
@@ -86,7 +86,7 @@ public:
 		assert(data != nullptr);
 		//Check appropriate assert for our map state
 		if (map_end > 0){
-			assert(i >= map_start && i <= map_end && (mode & GL_MAP_READ_BIT));
+			assert(i >= map_start && i < map_end && (mode & GL_MAP_READ_BIT));
 		}
 		else {
 			assert(i < capacity && (mode == GL_READ_ONLY || mode == GL_READ_WRITE));
@@ -101,7 +101,7 @@ public:
 		assert(data != nullptr);
 		//Check appopriate assert for our map state
 		if (map_end > 0){
-			assert(i >= map_start && i <= map_end && (mode & GL_MAP_WRITE_BIT));
+			assert(i >= map_start && i < map_end && (mode & GL_MAP_WRITE_BIT));
 		}
 		else {
 			assert(i < capacity && (mode == GL_WRITE_ONLY || mode == GL_READ_WRITE));
@@ -113,7 +113,7 @@ public:
 		assert(data != nullptr);
 		//Check appopriate assert for our map state
 		if (map_end > 0){
-			assert(i >= map_start && i <= map_end && (mode & (GL_MAP_WRITE_BIT | GL_MAP_READ_BIT)));
+			assert(i >= map_start && i < map_end && (mode & (GL_MAP_WRITE_BIT | GL_MAP_READ_BIT)));
 		}
 		else {
 			assert(i < capacity && mode == GL_READ_WRITE);
