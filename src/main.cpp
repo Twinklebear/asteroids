@@ -112,7 +112,7 @@ void run(SDL_Window *win){
 				if (e.key.keysym.sym == SDLK_a){
 					std::vector<std::tuple<size_t, glm::mat4>> updates;
 					for (size_t i = 0; i < batch.batch_size(); ++i){
-						matrices[i] = glm::translate(glm::vec3{-0.01f, 0.f, 0.f}) * matrices[i];
+						matrices[i] = glm::translate(glm::vec3{-0.1f, 0.f, 0.f}) * matrices[i];
 						updates.push_back(std::make_tuple(i, matrices[i]));
 					}
 					batch.update(updates);
@@ -120,7 +120,7 @@ void run(SDL_Window *win){
 				if (e.key.keysym.sym == SDLK_d){
 					std::vector<std::tuple<size_t, glm::mat4>> updates;
 					for (size_t i = 0; i < batch.batch_size(); ++i){
-						matrices[i] = glm::translate(glm::vec3{0.01f, 0.f, 0.f}) * matrices[i];
+						matrices[i] = glm::translate(glm::vec3{0.1f, 0.f, 0.f}) * matrices[i];
 						updates.push_back(std::make_tuple(i, matrices[i]));
 					}
 					batch.update(updates);
@@ -130,6 +130,14 @@ void run(SDL_Window *win){
 						* glm::scale(glm::vec3{0.5f, 0.5f, 0.5f}));
 					batch.push_back(matrices.back());
 					batch.set_attrib_index(3);
+				}
+				if (e.key.keysym.sym == SDLK_RIGHT){
+					matrices.back() = glm::translate(glm::vec3{0.1f, 0, 0}) * matrices.back();
+					batch.update(matrices.size() - 1, matrices.back());
+				}
+				if (e.key.keysym.sym == SDLK_LEFT){
+					matrices.back() = glm::translate(glm::vec3{-0.1f, 0, 0}) * matrices.back();
+					batch.update(matrices.size() - 1, matrices.back());
 				}
 			}
 		}

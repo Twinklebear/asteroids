@@ -37,6 +37,10 @@ public:
 	 */
 	void update(const std::vector<std::tuple<size_t, glm::mat4>> &updates);
 	/*
+	 * Update a single instance with new data
+	 */
+	void update(size_t i, const glm::mat4 &mat);
+	/*
 	 * Remove instance at the back of the list
 	 */
 	void pop_back();
