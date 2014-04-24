@@ -5,7 +5,6 @@
 #include <type_traits>
 #include <glm/glm.hpp>
 
-//This won't work for matrices
 template<typename T, size_t N>
 class STD140Array {
 	static_assert(!std::is_array<T>::value, "Multidimensional arrays not supported");
@@ -33,6 +32,9 @@ public:
 	}
 	void write(size_t i, const T &t){
 		operator[](i) = t;
+	}
+	char* raw(){
+		return &data[0];
 	}
 	size_t size(){
 		return N;
@@ -72,6 +74,9 @@ public:
 		array[2 * i] = m[0];
 		array[2 * i + 1] = m[1];
 	}
+	char* raw(){
+		return array.raw();
+	}
 	size_t size(){
 		return N;
 	}
@@ -103,6 +108,9 @@ public:
 		array[3 * i] = m[0];
 		array[3 * i + 1] = m[1];
 		array[3 * i + 2] = m[2];
+	}
+	char* raw(){
+		return array.raw();
 	}
 	size_t size(){
 		return N;
