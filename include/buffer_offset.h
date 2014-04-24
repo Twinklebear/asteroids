@@ -24,9 +24,7 @@ template<int I, typename T, typename... Args>
 struct Offset<I, Layout::ALIGNED, T, Args...> {
 	static_assert(I < sizeof...(Args) + 1, "AlignedOffset index out of bounds");
 	static size_t offset(size_t prev = 0){
-		prev += sizeof(T);
-		prev = prev % alignof(T) == 0 ? prev
-			: prev + alignof(T) - prev % alignof(T);
+		prev = Size<Layout::ALIGNED, T>::size(prev);
 		return Offset<I - 1, Layout::ALIGNED, Args...>::offset(prev);
 	}
 };
@@ -38,6 +36,7 @@ struct Offset<0, Layout::ALIGNED, T, Args...> {
 		return prev;
 	}
 };
+
 }
 
 #endif
