@@ -67,7 +67,7 @@ void run(SDL_Window *win){
 	//TODO We don't properly support std140 for vec3/mat3 types. Does glm have the
 	//right size/align for them? This will work currently since the glm::mat4's will
 	//align correctly by accident
-	InterleavedBuffer<Layout::PACKED, glm::mat4> viewing(2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	InterleavedBuffer<Layout::PACKED, glm::mat4> viewing{2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	viewing.map(GL_WRITE_ONLY);
 	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 5.f}, glm::vec3{0.f, 0.f, 0.f},
 		glm::vec3{0.f, 1.f, 0.f});
@@ -82,7 +82,7 @@ void run(SDL_Window *win){
 	glUniformBlockBinding(program, viewing_block, 0);
 	viewing.bind_base(0);
 
-	RenderBatch batch(4, Model("../res/polyhedron.obj"));
+	RenderBatch batch{4, Model{"../res/polyhedron.obj"}};
 	std::vector<glm::mat4> matrices = {
 		glm::translate(glm::vec3{-0.5f, 0.f, 1.f})
 			* glm::scale(glm::vec3{0.5f, 0.5f, 1.f}),
