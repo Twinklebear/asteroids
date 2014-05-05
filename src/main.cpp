@@ -2,7 +2,6 @@
 #include <tuple>
 #include <SDL.h>
 #include <entityx/entityx.h>
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include "gl_core_3_3.h"
@@ -10,6 +9,7 @@
 #include "interleavedbuffer.h"
 #include "renderbatch.h"
 #include "model.h"
+#include "level.h"
 
 void run(SDL_Window *win);
 
