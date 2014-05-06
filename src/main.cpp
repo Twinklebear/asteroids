@@ -50,41 +50,19 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
-	GLint program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
-		std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
-	if (program == -1){
-		return -1;
-	}
-	glUseProgram(program);
-	//TODO We don't properly support std140 for vec3/mat3 types. Does glm have the
-	//right size/align for them? This will work currently since the glm::mat4's will
-	//align correctly by accident
-	InterleavedBuffer<Layout::PACKED, glm::mat4> viewing{2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
-	viewing.map(GL_WRITE_ONLY);
-	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 5.f}, glm::vec3{0.f, 0.f, 0.f},
-		glm::vec3{0.f, 1.f, 0.f});
-	viewing.write<0>(1) = glm::perspective(util::deg_to_rad(75), 640.f/480, 1.f, 100.f);
-	viewing.unmap();
-	GLuint viewing_block = glGetUniformBlockIndex(program, "Viewing");
-	if (viewing_block == GL_INVALID_INDEX){
-		std::cerr << "Failed to find Viewing uniform block\n";
-		glDeleteProgram(program);
-		return -1;
-	}
-	glUniformBlockBinding(program, viewing_block, 0);
-	viewing.bind_base(0);
 
-	Level level;
-	level.start();
-	level.step(0.1);
+	{
+		Level level;
+		level.start();
+		level.step(0.1);
 
-	GLenum err = glGetError();
-	if (err != GL_NO_ERROR){
-		std::cerr << "OpenGL Error: " << std::hex << err << std::dec << "\n";
+		GLenum err = glGetError();
+		if (err != GL_NO_ERROR){
+			std::cerr << "OpenGL Error: " << std::hex << err << std::dec << "\n";
+		}
+		SDL_GL_SwapWindow(win);
+		SDL_Delay(1000);
 	}
-	SDL_GL_SwapWindow(win);
-	SDL_Delay(1000);
-	glDeleteProgram(program);
 	//run(win);
 
 	SDL_GL_DeleteContext(context);
