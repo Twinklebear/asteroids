@@ -50,6 +50,10 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
+	Level level;
+	level.start();
+	level.step(0.1);
+
 	run(win);
 
 	SDL_GL_DeleteContext(context);

@@ -1,5 +1,4 @@
 #include <vector>
-#include <tuple>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <entityx/entityx.h>
@@ -10,18 +9,23 @@
 #include "systems/asteroid_system.h"
 
 AsteroidSystem::AsteroidSystem() : render_batch(4, Model{"../res/polyhedron.obj"}){
-	std::cout << "Asteroid system running\n";
+	//Everything's just gonna use the same program
+	render_batch.set_attrib_index(3);
 }
 void AsteroidSystem::update(entityx::ptr<entityx::EntityManager> es,
 	entityx::ptr<entityx::EventManager> events, double dt){
-	/*
+	std::vector<glm::mat4> updates;
 	size_t i = 0;
-	std::vector<std::tuple<size_t, glm::mat4>> updates;
 	for (auto entity : es->entities_with_components<Asteroid>()){
 		entityx::ptr<Position> pos = entity.component<Position>();
-		updates.push_back(std::make_tuple(i, glm::translate(glm::vec3{pos->pos})
-			* glm::scale(glm::vec3{0.5f, 0.5f, 0.5f})));
+		updates.push_back(glm::translate(glm::vec3{pos->pos.x, pos->pos.y, 1.f})
+			* glm::scale(glm::vec3{0.5f, 0.5f, 0.5f}));
+		++i;
 	}
-	*/
+	if (i > render_batch.batch_size()){
+		render_batch.resize(i);
+	}
+	render_batch.update(updates);
+	render_batch.render();
 }
 
