@@ -45,9 +45,9 @@ public:
 	 */
 	void update(size_t i, const glm::mat4 &mat);
 	/*
-	 * Add some number of additional instances to the batch
+	 * Resize the batch to some new size
 	 */
-	void expand(size_t n);
+	void resize(size_t n);
 	/*
 	 * Remove some number of instances at the back of the list, default of 1
 	 */

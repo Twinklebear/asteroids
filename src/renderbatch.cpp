@@ -52,11 +52,11 @@ void RenderBatch::update(size_t i, const glm::mat4 &mat){
 	matrices.write<0>(i) = mat;
 	matrices.unmap();
 }
-void RenderBatch::expand(size_t n){
-	if (size + n > matrices.size()){
-		resize_buffer(size + n);
+void RenderBatch::resize(size_t n){
+	if (n > matrices.size()){
+		resize_buffer(n);
 	}
-	size += n;
+	size = n;
 }
 void RenderBatch::pop_back(size_t n){
 	size -= n;
