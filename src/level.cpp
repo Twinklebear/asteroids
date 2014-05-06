@@ -1,8 +1,9 @@
 #include <random>
 #include <entityx/entityx.h>
 #include <glm/glm.hpp>
-#include "movement_system.h"
-#include "components.h"
+#include "systems/movement_system.h"
+#include "components/position.h"
+#include "components/velocity.h"
 #include "level.h"
 
 void Level::configure(){

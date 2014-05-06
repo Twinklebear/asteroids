@@ -1,8 +1,9 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <entityx/entityx.h>
-#include "components.h"
-#include "movement_system.h"
+#include "components/position.h"
+#include "components/velocity.h"
+#include "systems/movement_system.h"
 
 void MovementSystem::update(entityx::ptr<entityx::EntityManager> es,
 	entityx::ptr<entityx::EventManager> events, double dt){
