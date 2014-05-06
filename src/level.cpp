@@ -19,7 +19,7 @@ Level::~Level(){
 }
 void Level::configure(){
 	system_manager->add<MovementSystem>();
-	system_manager->add<AsteroidSystem>(4);
+	system_manager->add<AsteroidSystem>(10);
 	system_manager->add<entityx::deps::Dependency<Asteroid, Position, Velocity>>();
 	shader_program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
 		std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
@@ -29,7 +29,7 @@ void Level::configure(){
 void Level::initialize(){
 	std::mt19937 mt_rand;
 	mt_rand.seed(std::time(0));
-	for (int i = 0; i < 4; ++i){
+	for (int i = 0; i < 10; ++i){
 		entityx::Entity e = entity_manager->create();
 		e.assign<Position>(glm::vec2{static_cast<float>(mt_rand() % 8) - 4,
 			static_cast<float>(mt_rand() % 8) - 4});
@@ -38,9 +38,9 @@ void Level::initialize(){
 		e.assign<Asteroid>();
 	}
 	viewing.map(GL_WRITE_ONLY);
-	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 5.f}, glm::vec3{0.f, 0.f, 0.f},
+	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 8.f}, glm::vec3{0.f, 0.f, 0.f},
 		glm::vec3{0.f, 1.f, 0.f});
-	viewing.write<0>(1) = glm::perspective(util::deg_to_rad(75), 640.f/480, 1.f, 100.f);
+	viewing.write<0>(1) = glm::ortho(-5.f, 5.f, -5.f, 5.f, 1.f, 100.f);
 	viewing.unmap();
 	GLuint viewing_block = glGetUniformBlockIndex(shader_program, "Viewing");
 	glUniformBlockBinding(shader_program, viewing_block, 0);
