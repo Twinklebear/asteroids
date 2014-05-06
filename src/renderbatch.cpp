@@ -39,6 +39,14 @@ void RenderBatch::update(const std::vector<std::tuple<size_t, glm::mat4>> &updat
 	}
 	matrices.unmap();
 }
+void RenderBatch::update(const std::vector<glm::mat4> &updates){
+	assert(updates.size() < size);
+	matrices.map(GL_WRITE_ONLY);
+	for (size_t i = 0; i < updates.size(); ++i){
+		matrices.write<0>(i) = updates[i];
+	}
+	matrices.unmap();
+}
 void RenderBatch::update(size_t i, const glm::mat4 &mat){
 	matrices.map_range(i, 1, GL_MAP_WRITE_BIT);
 	matrices.write<0>(i) = mat;

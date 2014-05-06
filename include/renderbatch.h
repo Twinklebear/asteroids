@@ -33,9 +33,13 @@ public:
 	 */
 	void push_back(const glm::mat4 &mat);
 	/*
-	 * Update existing instances with new data
+	 * Update existing instances with new data, specifying the indices to be updated
 	 */
 	void update(const std::vector<std::tuple<size_t, glm::mat4>> &updates);
+	/*
+	 * Update existing instances with new data in order
+	 */
+	void update(const std::vector<glm::mat4> &updates);
 	/*
 	 * Update a single instance with new data
 	 */
