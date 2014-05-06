@@ -25,7 +25,7 @@ class InterleavedBuffer {
 	using Offset = detail::Offset<I, L, Args...>;
 
 public:
-	InterleavedBuffer() : capacity(capacity), stride_(0), buffer(nullptr),
+	InterleavedBuffer() : capacity(0), stride_(0), buffer(nullptr),
 		mode(0), type(0), access(0), data(nullptr), map_start(0), map_end(0)
 	{}
 	InterleavedBuffer(size_t capacity, GLenum type, GLenum access)

@@ -12,7 +12,7 @@ RenderBatch::RenderBatch(size_t capacity, Model model) : size(0),
 {}
 void RenderBatch::push_back(const std::vector<glm::mat4> &objs){
 	if (size + objs.size() > matrices.size()){
-		resize_buffer();
+		resize_buffer(2 * matrices.size());
 	}
 	matrices.map(GL_WRITE_ONLY);
 	for (size_t i = 0; i < objs.size(); ++i){
@@ -23,7 +23,7 @@ void RenderBatch::push_back(const std::vector<glm::mat4> &objs){
 }
 void RenderBatch::push_back(const glm::mat4 &mat){
 	if (size + 1 > matrices.size()){
-		resize_buffer();
+		resize_buffer(2 * matrices.size());
 	}
 	matrices.map(GL_WRITE_ONLY);
 	matrices.write<0>(size) = mat;
@@ -44,8 +44,14 @@ void RenderBatch::update(size_t i, const glm::mat4 &mat){
 	matrices.write<0>(i) = mat;
 	matrices.unmap();
 }
-void RenderBatch::pop_back(){
-	--size;
+void RenderBatch::expand(size_t n){
+	if (size + n > matrices.size()){
+		resize_buffer(size + n);
+	}
+	size += n;
+}
+void RenderBatch::pop_back(size_t n){
+	size -= n;
 }
 void RenderBatch::remove(size_t i){
 	assert(i < size);
@@ -73,9 +79,9 @@ void RenderBatch::render(){
 size_t RenderBatch::batch_size() const {
 	return size;
 }
-void RenderBatch::resize_buffer(){
+void RenderBatch::resize_buffer(size_t n){
 	std::cerr << "Performance warning: RenderBatch attribute buffer resizing, consider making it bigger\n";
-	InterleavedBuffer<Layout::ALIGNED, glm::mat4> new_mat(2 * matrices.size(), GL_ARRAY_BUFFER,
+	InterleavedBuffer<Layout::ALIGNED, glm::mat4> new_mat(n, GL_ARRAY_BUFFER,
 		GL_STREAM_DRAW);
 	new_mat.bind(GL_COPY_WRITE_BUFFER);
 	matrices.bind(GL_COPY_READ_BUFFER);

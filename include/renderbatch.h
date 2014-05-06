@@ -41,9 +41,13 @@ public:
 	 */
 	void update(size_t i, const glm::mat4 &mat);
 	/*
-	 * Remove instance at the back of the list
+	 * Add some number of additional instances to the batch
 	 */
-	void pop_back();
+	void expand(size_t n);
+	/*
+	 * Remove some number of instances at the back of the list, default of 1
+	 */
+	void pop_back(size_t n = 1);
 	/*
 	 * Remove the instance at some index
 	 */
@@ -59,8 +63,8 @@ public:
 	size_t batch_size() const;
 
 private:
-	//Double the instance data buffer capacity
-	void resize_buffer();
+	//Resize the instance data buffer capacity to some new size
+	void resize_buffer(size_t n);
 };
 
 #endif
