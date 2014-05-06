@@ -8,7 +8,7 @@
 #include "components/appearance.h"
 #include "systems/asteroid_system.h"
 
-AsteroidSystem::AsteroidSystem() : render_batch(4, Model{"../res/polyhedron.obj"}){
+AsteroidSystem::AsteroidSystem(size_t n) : render_batch(n, Model{"../res/polyhedron.obj"}){
 	//Everything's just gonna use the same program
 	render_batch.set_attrib_index(3);
 }

@@ -9,7 +9,7 @@ class AsteroidSystem : public entityx::System<AsteroidSystem> {
 	RenderBatch render_batch;
 
 public:
-	AsteroidSystem();
+	AsteroidSystem(size_t n);
 	void update(entityx::ptr<entityx::EntityManager> es,
 		entityx::ptr<entityx::EventManager> events, double dt) override;
 };

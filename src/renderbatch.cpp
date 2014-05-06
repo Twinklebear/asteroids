@@ -40,7 +40,7 @@ void RenderBatch::update(const std::vector<std::tuple<size_t, glm::mat4>> &updat
 	matrices.unmap();
 }
 void RenderBatch::update(const std::vector<glm::mat4> &updates){
-	assert(updates.size() < size);
+	assert(updates.size() <= size);
 	matrices.map(GL_WRITE_ONLY);
 	for (size_t i = 0; i < updates.size(); ++i){
 		matrices.write<0>(i) = updates[i];
