@@ -60,16 +60,7 @@ int main(int argc, char **argv){
 void run(SDL_Window *win){
 	Level level;
 	level.start();
-
-	bool quit = false;
-	while (!quit){
-		SDL_Event e;
-		while (SDL_PollEvent(&e)){
-			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)){
-				quit = true;
-				break;
-			}
-		}
+	while (!level.should_quit()){
 		level.step(0.1);
 		GLenum err = glGetError();
 		if (err != GL_NO_ERROR){

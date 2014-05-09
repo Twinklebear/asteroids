@@ -1,30 +1,72 @@
 #include <random>
 #include <tuple>
 #include <ctime>
+#include <SDL.h>
 #include <entityx/entityx.h>
 #include <entityx/deps/Dependencies.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include "util.h"
 #include "interleavedbuffer.h"
+#include "events/input_event.h"
 #include "systems/movement_system.h"
+#include "systems/input_system.h"
 #include "systems/asteroid_system.h"
 #include "components/position.h"
 #include "components/velocity.h"
 #include "components/appearance.h"
 #include "level.h"
 
+Level::Level() : shader_program(0), viewing(), quit(false) {}
 Level::~Level(){
 	glDeleteProgram(shader_program);
+}
+void Level::receive(const InputEvent &input){
+	std::cout << "Received event: ";
+	switch (input.event.type){
+		case SDL_KEYDOWN:
+			std::cout << "SDL_KEYDOWN\n";
+			quit = input.event.key.keysym.sym == SDLK_ESCAPE;
+			break;
+		case SDL_KEYUP:
+			std::cout << "SDL_KEYUP\n";
+			break;
+		case SDL_QUIT:
+			std::cout << "SDL_QUIT\n";
+			quit = true;
+			break;
+		case SDL_MOUSEBUTTONDOWN:
+			std::cout << "SDL_MOUSEBUTTONDOWN\n";
+			break;
+		case SDL_MOUSEBUTTONUP:
+			std::cout << "SDL_MOUSEBUTTONUP\n";
+			break;
+		case SDL_MOUSEMOTION:
+			std::cout << "SDL_MOUSEMOTION\n";
+			break;
+		case SDL_MOUSEWHEEL:
+			std::cout << "SDL_MOUSEWHEEL\n";
+			break;
+		case SDL_WINDOWEVENT:
+			std::cout << "SDL_WINDOWEVENT\n";
+			break;
+		default:
+			std::cout << "other event\n";
+	}
+}
+bool Level::should_quit(){
+	return quit;
 }
 void Level::configure(){
 	system_manager->add<MovementSystem>();
 	system_manager->add<AsteroidSystem>(10);
+	system_manager->add<InputSystem>();
 	system_manager->add<entityx::deps::Dependency<Asteroid, Position, Velocity>>();
 	shader_program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
 		std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
 	viewing = InterleavedBuffer<Layout::PACKED, glm::mat4>{2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	assert(shader_program != -1);
+	event_manager->subscribe<InputEvent>(*this);
 }
 void Level::initialize(){
 	std::mt19937 mt_rand;
@@ -48,6 +90,7 @@ void Level::initialize(){
 	glUseProgram(shader_program);
 }
 void Level::update(double dt){
+	system_manager->update<InputSystem>(dt);
 	system_manager->update<MovementSystem>(dt);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	system_manager->update<AsteroidSystem>(dt);
