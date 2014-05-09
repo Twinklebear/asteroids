@@ -14,7 +14,7 @@ set(entityx_LIBRARY "${entityx_DIR}/lib/libentityx.a")
 ExternalProject_Add(entityx
 	PREFIX ${entityx_DIR}
 	GIT_REPOSITORY https://github.com/alecthomas/entityx.git
-	GIT_TAG e866fa4e7a781eb7e4de37a03ddfa191d5edd522
+	GIT_TAG origin/0.1.x
 	INSTALL_DIR ${entityx_DIR}
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${entityx_DIR}
 )
