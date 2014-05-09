@@ -39,7 +39,6 @@ if (WIN32)
 	include_directories(${GLM_INCLUDE_DIRS})
 endif()
 
-message("Entityx dir ${entityx_DIR}")
 include_directories(include ${entityx_DIR}/include ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
 add_subdirectory(src)
 
