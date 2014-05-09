@@ -2,6 +2,7 @@
 #define BUFFER_SIZE_H
 
 #include <glm/glm.hpp>
+#include "std140_array.h"
 
 /*
  * Note: only rules 1-8 of the STD140 layout spec are implemented
@@ -50,19 +51,11 @@ struct Size<Layout::ALIGNED, T> {
 template<typename T, typename... Args>
 struct Size<Layout::STD140, T, Args...> {
 	static size_t size(size_t prev = 0){
-		//Rule 4 for arrays. Arrays are assumed to be 1D
-		//Note: we wouldn't be able to handle writing to arrays
-		//though since we wouldn't have the right offsets for the indices
-		if (std::is_array<T>::value){
-			//using E = typename std::remove_all_extents<T>::type;
-		}
 		//Rule 1 for scalar alignment, also applied to unknown types
-		else {
-			prev += sizeof(T);
-			prev = prev % sizeof(T) == 0 ? prev
-				: prev + sizeof(T) - prev % sizeof(T);
-		}
-		return Size<Layout::ALIGNED, Args...>::size(prev);
+		prev += sizeof(T);
+		prev = prev % sizeof(T) == 0 ? prev
+			: prev + sizeof(T) - prev % sizeof(T);
+		return Size<Layout::STD140, Args...>::size(prev);
 	}
 };
 template<typename... Args>
@@ -73,7 +66,7 @@ struct Size<Layout::STD140, glm::vec2, Args...> {
 		using V = glm::vec2::value_type;
 		prev = prev % (2 * sizeof(V)) == 0 ? prev
 			: prev + 2 * sizeof(V) - prev % (2 * sizeof(V));
-		return Size<Layout::ALIGNED, Args...>::size(prev);
+		return Size<Layout::STD140, Args...>::size(prev);
 	}
 };
 template<typename... Args>
@@ -84,7 +77,7 @@ struct Size<Layout::STD140, glm::vec3, Args...> {
 		using V = glm::vec3::value_type;
 		prev = prev % (4 * sizeof(V)) == 0 ? prev
 			: prev + 4 * sizeof(V) - prev % (4 * sizeof(V));
-		return Size<Layout::ALIGNED, Args...>::size(prev);
+		return Size<Layout::STD140, Args...>::size(prev);
 	}
 };
 template<typename... Args>
@@ -95,7 +88,23 @@ struct Size<Layout::STD140, glm::vec4, Args...> {
 		using V = glm::vec4::value_type;
 		prev = prev % (4 * sizeof(V)) == 0 ? prev
 			: prev + 4 * sizeof(V) - prev % (4 * sizeof(V));
-		return Size<Layout::ALIGNED, Args...>::size(prev);
+		return Size<Layout::STD140, Args...>::size(prev);
+	}
+};
+template<typename T, size_t N, typename... Args>
+struct Size<Layout::STD140, STD140Array<T, N>, Args...> {
+	static size_t size(size_t prev = 0){
+		//Rule 4 for arrays
+		prev += N * STD140Array<T, N>::stride();
+		return Size<Layout::STD140, Args...>::size(prev);
+	}
+};
+template<typename... Args>
+struct Size<Layout::STD140, glm::mat4, Args...> {
+	static size_t size(size_t prev = 0){
+		//Rule 5/7 for mat4's (ie. treat as array)
+		return Size<Layout::STD140,
+		   STD140Array<glm::mat4, 1>, Args...>::size(prev);
 	}
 };
 template<typename T>
@@ -141,6 +150,21 @@ struct Size<Layout::STD140, glm::vec4> {
 		prev = prev % (4 * sizeof(V)) == 0 ? prev
 			: prev + 4 * sizeof(V) - prev % (4 * sizeof(V));
 		return prev;
+	}
+};
+template<typename T, size_t N>
+struct Size<Layout::STD140, STD140Array<T, N>> {
+	static size_t size(size_t prev = 0){
+		//Rule 4 for arrays
+		prev += N * STD140Array<T, N>::stride();
+		return prev;
+	}
+};
+template<>
+struct Size<Layout::STD140, glm::mat4> {
+	static size_t size(size_t prev = 0){
+		//Rule 5/7 for mat4's (ie. treat as array)
+		return Size<Layout::STD140, STD140Array<glm::mat4, 1>>::size(prev);
 	}
 };
 }

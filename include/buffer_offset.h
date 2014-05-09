@@ -1,6 +1,7 @@
 #ifndef BUFFER_OFFSET_H
 #define BUFFER_OFFSET_H
 
+#include "std140_array.h"
 #include "buffer_size.h"
 
 namespace detail {
@@ -41,7 +42,7 @@ struct Offset<I, Layout::STD140, T, Args...> {
 	static_assert(I < sizeof...(Args) + 1, "STD140Offset index out of bounds");
 	static size_t offset(size_t prev = 0){
 		prev = Size<Layout::STD140, T>::size(prev);
-		return Offset<I - 1, Layout::ALIGNED, Args...>::offset(prev);
+		return Offset<I - 1, Layout::STD140, Args...>::offset(prev);
 	}
 };
 template<typename T, typename... Args>
@@ -80,6 +81,26 @@ struct Offset<0, Layout::STD140, glm::vec4, Args...> {
 	static size_t offset(size_t prev = 0){
 		//Rule 2 for 4 component vector
 		using V = glm::vec4::value_type;
+		prev = prev % (4 * sizeof(V)) == 0 ? prev
+			: prev + 4 * sizeof(V) - prev % (4 * sizeof(V));
+		return prev;
+	}
+};
+template<typename T, size_t N, typename... Args>
+struct Offset<0, Layout::STD140, STD140Array<T, N>, Args...> {
+	static size_t offset(size_t prev = 0){
+		//Rule 4 for arrays (align to vec4)
+		using V = glm::vec4::value_type;
+		prev = prev % (4 * sizeof(V)) == 0 ? prev
+			: prev + 4 * sizeof(V) - prev % (4 * sizeof(V));
+		return prev;
+	}
+};
+template<typename... Args>
+struct Offset<0, Layout::STD140, glm::mat4, Args...> {
+	static size_t offset(size_t prev = 0){
+		//Rule 5/7 for matrices (align to vec4)
+		using V = glm::mat4::value_type;
 		prev = prev % (4 * sizeof(V)) == 0 ? prev
 			: prev + 4 * sizeof(V) - prev % (4 * sizeof(V));
 		return prev;

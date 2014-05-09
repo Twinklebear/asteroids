@@ -36,14 +36,14 @@ public:
 	char* raw(){
 		return &data[0];
 	}
-	size_t size(){
+	static constexpr size_t size(){
 		return N;
 	}
 	/*
 	 * Compute the array stride for the std140 layout requirements
 	 * which requires that elements are aligned to vec4 (16 byte) alignment
 	 */
-	constexpr size_t stride(){
+	static constexpr size_t stride(){
 		return sizeof(T) % 16 == 0 ? sizeof(T) : sizeof(T) + 16 - sizeof(T) % 16;
 	}
 };
@@ -77,11 +77,11 @@ public:
 	char* raw(){
 		return array.raw();
 	}
-	size_t size(){
+	static constexpr size_t size(){
 		return N;
 	}
-	constexpr size_t stride(){
-		return 2 * array.stride();
+	static constexpr size_t stride(){
+		return 2 * STD140Array<glm::vec2, 2 * N>::stride();
 	}
 };
 template<size_t N>
@@ -112,11 +112,11 @@ public:
 	char* raw(){
 		return array.raw();
 	}
-	size_t size(){
+	static constexpr size_t size(){
 		return N;
 	}
-	constexpr size_t stride(){
-		return 3 * array.stride();
+	static constexpr size_t stride(){
+		return 3 * STD140Array<glm::vec3, 3 * N>::stride();
 	}
 };
 

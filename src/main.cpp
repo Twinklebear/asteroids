@@ -1,5 +1,6 @@
 #include <iostream>
 #include <tuple>
+#include <string>
 #include <SDL.h>
 #include <entityx/entityx.h>
 #include <glm/glm.hpp>
@@ -12,6 +13,9 @@
 #include "level.h"
 
 void run(SDL_Window *win);
+//This is just for testing that the alignments/offsets I compute match STD140 in GLSL
+std::string gltype_tostring(GLint type);
+void print_glsl_blocks();
 
 int main(int argc, char **argv){
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
@@ -50,7 +54,8 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
-	run(win);
+	print_glsl_blocks();
+	//run(win);
 
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);
@@ -68,6 +73,114 @@ void run(SDL_Window *win){
 		}
 		SDL_GL_SwapWindow(win);
 		SDL_Delay(16);
+	}
+}
+
+template<size_t I>
+using Offset = detail::Offset<I, Layout::STD140, glm::mat4, STD140Array<float, 10>, int>;
+
+void print_glsl_blocks(){
+	static std::string divider(20, '-');
+	std::cout << divider << "\n";
+	GLint program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vtest.glsl"),
+		std::make_tuple(GL_FRAGMENT_SHADER, "../res/ftest.glsl")});
+	assert(program != -1);
+	GLuint block_idx = glGetUniformBlockIndex(program, "Test");
+	assert(block_idx != GL_INVALID_INDEX);
+	GLint param;
+	glGetActiveUniformBlockiv(program, block_idx, GL_UNIFORM_BLOCK_DATA_SIZE, &param);
+	std::cout << "Uniform block Test requires " << param << " bytes\n";
+	
+	glGetActiveUniformBlockiv(program, block_idx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &param);
+	std::vector<GLint> indices(param);
+	glGetActiveUniformBlockiv(program, block_idx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &indices[0]);
+	std::cout << "Number of active uniforms: " << indices.size() << "\n";
+	for (GLuint i : indices){
+		glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_NAME_LENGTH, &param);
+		char *name = new char[param];
+		glGetActiveUniformName(program, i, param, NULL, name);
+		std::cout << divider << "\nUniform member " << name << ":\n";
+		delete[] name;
+
+		glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_TYPE, &param);
+		std::cout << "Type: " << gltype_tostring(param) << "\n";
+		glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_SIZE, &param);
+		if (param > 1){
+			std::cout << "Array length: " << param << "\n";
+			glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_ARRAY_STRIDE, &param);
+			std::cout << "Array stride: " << param << "\n";
+		}
+		glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_OFFSET, &param);
+		std::cout << "Offset: " << param << "\n";
+		glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_MATRIX_STRIDE, &param);
+		if (param > 0){
+			std::cout << "Matrix stride: " << param << "\n";
+		}
+	}
+	std::cout << divider << "\n";
+	glDeleteProgram(program);
+
+	std::cout << "Computed Size: "
+		<< detail::Size<Layout::STD140, glm::mat4, STD140Array<float, 10>, int>::size()
+		<< "\n";
+	std::cout << "Offset of first: " << Offset<0>::offset()
+		<< "\nSecond: " << Offset<1>::offset() << "\nThird: " << Offset<2>::offset()
+		<< "\n";
+}
+std::string gltype_tostring(GLint type){
+	switch (type){
+		case GL_FLOAT:
+			return "GL_FLOAT";
+		case GL_FLOAT_VEC2:
+			return "GL_FLOAT_VEC2";
+		case GL_FLOAT_VEC3:
+			return "GL_FLOAT_VEC3";
+		case GL_FLOAT_VEC4:
+			return "GL_FLOAT_VEC4";
+		case GL_INT:
+			return "GL_INT";
+		case GL_INT_VEC2:
+			return "GL_INT_VEC2";
+		case GL_INT_VEC3:
+			return "GL_INT_VEC3";
+		case GL_INT_VEC4:
+			return "GL_INT_VEC4";
+		case GL_UNSIGNED_INT:
+			return "GL_UNSIGNED_INT";
+		case GL_UNSIGNED_INT_VEC2:
+			return "GL_UNSIGNED_INT_VEC2";
+		case GL_UNSIGNED_INT_VEC3:
+			return "GL_UNSIGNED_INT_VEC3";
+		case GL_UNSIGNED_INT_VEC4:
+			return "GL_UNSIGNED_INT_VEC4";
+		case GL_BOOL:
+			return "GL_BOOL";
+		case GL_BOOL_VEC2:
+			return "GL_BOOL_VEC2";
+		case GL_BOOL_VEC3:
+			return "GL_BOOL_VEC3";
+		case GL_BOOL_VEC4:
+			return "GL_BOOL_VEC4";
+		case GL_FLOAT_MAT2:
+			return "GL_FLOAT_MAT2";
+		case GL_FLOAT_MAT3:
+			return "GL_FLOAT_MAT3";
+		case GL_FLOAT_MAT4:
+			return "GL_FLOAT_MAT4";
+		case GL_FLOAT_MAT2x3:
+			return "GL_FLOAT_MAT2x3";
+		case GL_FLOAT_MAT2x4:
+			return "GL_FLOAT_MAT2x4";
+		case GL_FLOAT_MAT3x2:
+			return "GL_FLOAT_MAT3x2";
+		case GL_FLOAT_MAT3x4:
+			return "GL_FLOAT_MAT3x4";
+		case GL_FLOAT_MAT4x2:
+			return "GL_FLOAT_MAT4x2";
+		case GL_FLOAT_MAT4x3:
+			return "GL_FLOAT_MAT4x3";
+		default:
+			return "Other Type";
 	}
 }
 
