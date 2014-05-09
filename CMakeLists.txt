@@ -14,6 +14,7 @@ set(entityx_LIBRARY "${entityx_DIR}/lib/libentityx.a")
 ExternalProject_Add(entityx
 	PREFIX ${entityx_DIR}
 	GIT_REPOSITORY https://github.com/alecthomas/entityx.git
+	GIT_TAG e866fa4e7a781eb7e4de37a03ddfa191d5edd522
 	INSTALL_DIR ${entityx_DIR}
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${entityx_DIR}
 )
@@ -38,6 +39,7 @@ if (WIN32)
 	include_directories(${GLM_INCLUDE_DIRS})
 endif()
 
+message("Entityx dir ${entityx_DIR}")
 include_directories(include ${entityx_DIR}/include ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
 add_subdirectory(src)
 
