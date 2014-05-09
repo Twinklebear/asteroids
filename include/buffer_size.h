@@ -96,6 +96,10 @@ struct Size<Layout::STD140, STD140Array<T, N>, Args...> {
 	static size_t size(size_t prev = 0){
 		//Rule 4 for arrays
 		prev += N * STD140Array<T, N>::stride();
+		//Rule also states we align as a vec4
+		using V = glm::vec4::value_type;
+		prev = prev % (4 * sizeof(V)) == 0 ? prev
+			: prev + 4 * sizeof(V) - prev % (4 * sizeof(V));
 		return Size<Layout::STD140, Args...>::size(prev);
 	}
 };
@@ -157,6 +161,10 @@ struct Size<Layout::STD140, STD140Array<T, N>> {
 	static size_t size(size_t prev = 0){
 		//Rule 4 for arrays
 		prev += N * STD140Array<T, N>::stride();
+		//Rule also states we align as a vec4
+		using V = glm::vec4::value_type;
+		prev = prev % (4 * sizeof(V)) == 0 ? prev
+			: prev + 4 * sizeof(V) - prev % (4 * sizeof(V));
 		return prev;
 	}
 };

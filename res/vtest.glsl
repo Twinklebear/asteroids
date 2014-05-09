@@ -2,6 +2,7 @@
 
 layout(std140) uniform Test {
 	mat4 m;
+	float f;
 	float arr[10];
 	int b;
 };
