@@ -10,7 +10,5 @@ struct Position : entityx::Component<Position> {
 	Position(const glm::vec2 &pos = glm::vec2{0.f, 0.f}) : pos(pos) {}
 };
 
-
-
 #endif
 
