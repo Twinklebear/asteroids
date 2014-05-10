@@ -77,7 +77,10 @@ void run(SDL_Window *win){
 }
 
 template<size_t I>
-using Offset = detail::Offset<I, Layout::STD140, glm::mat4, float, STD140Array<float, 10>, int>;
+using Offset = detail::Offset<I, Layout::STD140, glm::mat4, float,
+	STD140Array<float, 10>, int, STD140Array<int, 5>>;
+using Size = detail::Size<Layout::STD140, glm::mat4, float,
+	STD140Array<float, 10>, int, STD140Array<int, 5>>;
 
 void print_glsl_blocks(){
 	static std::string divider(20, '-');
@@ -90,16 +93,20 @@ void print_glsl_blocks(){
 	GLint param;
 	glGetActiveUniformBlockiv(program, block_idx, GL_UNIFORM_BLOCK_DATA_SIZE, &param);
 	std::cout << "Uniform block Test requires " << param << " bytes\n";
-	
-	glGetActiveUniformBlockiv(program, block_idx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &param);
+
+	glGetActiveUniformBlockiv(program, block_idx,
+		GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &param);
 	std::vector<GLint> indices(param);
-	glGetActiveUniformBlockiv(program, block_idx, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &indices[0]);
+	glGetActiveUniformBlockiv(program, block_idx,
+		GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, &indices[0]);
+
 	std::cout << "Number of active uniforms: " << indices.size() << "\n";
 	for (GLuint i : indices){
 		glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_NAME_LENGTH, &param);
 		char *name = new char[param];
 		glGetActiveUniformName(program, i, param, NULL, name);
-		std::cout << divider << "\nUniform member " << name << ":\n";
+		std::cout << divider << "\nUniform index " << i
+			<< "\nName: " << name << "\n";
 		delete[] name;
 
 		glGetActiveUniformsiv(program, 1, &i, GL_UNIFORM_TYPE, &param);
@@ -120,13 +127,12 @@ void print_glsl_blocks(){
 	std::cout << divider << "\n";
 	glDeleteProgram(program);
 
-	std::cout << "Computed Size: "
-		<< detail::Size<Layout::STD140, glm::mat4, float, STD140Array<float, 10>, int>::size()
-		<< "\n";
+	std::cout << "Computed Size: " << Size::size() << "\n";
 	std::cout << "Offset of first: " << Offset<0>::offset()
 		<< "\nSecond: " << Offset<1>::offset()
 		<< "\nThird: " << Offset<2>::offset()
 		<< "\nFourth: " << Offset<3>::offset()
+		<< "\nFifth: " << Offset<4>::offset()
 		<< "\n";
 }
 std::string gltype_tostring(GLint type){
