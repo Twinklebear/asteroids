@@ -31,8 +31,10 @@ void RenderBatch::push_back(const glm::mat4 &mat){
 	size += 1;
 }
 void RenderBatch::update(const std::vector<std::tuple<size_t, glm::mat4>> &updates){
+	//Should we instead use FLUSH_EXPLICIT here and then condense the flushes into
+	//blocks of the updated ranges of matrices?
 	matrices.map(GL_WRITE_ONLY);
-	for (const std::tuple<size_t, glm::mat4> t : updates){
+	for (const std::tuple<size_t, glm::mat4> &t : updates){
 		size_t i = std::get<0>(t);
 		assert(i < size);
 		matrices.write<0>(i) = std::get<1>(t);
@@ -41,7 +43,7 @@ void RenderBatch::update(const std::vector<std::tuple<size_t, glm::mat4>> &updat
 }
 void RenderBatch::update(const std::vector<glm::mat4> &updates){
 	assert(updates.size() <= size);
-	matrices.map(GL_WRITE_ONLY);
+	matrices.map_range(0, updates.size(), GL_MAP_WRITE_BIT);
 	for (size_t i = 0; i < updates.size(); ++i){
 		matrices.write<0>(i) = updates[i];
 	}

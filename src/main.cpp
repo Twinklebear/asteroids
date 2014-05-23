@@ -54,8 +54,7 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
-	print_glsl_blocks();
-	//run(win);
+	run(win);
 
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);

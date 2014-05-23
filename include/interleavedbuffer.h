@@ -69,10 +69,10 @@ public:
 			length * stride_, flags));
 	}
 	void flush_range(size_t start, size_t length){
-		assert(map_end > 0 && map_start <= start && start + length < map_end
+		assert(map_end > 0 && map_start <= start && start + length <= map_end
 			&& (mode & GL_MAP_FLUSH_EXPLICIT_BIT));
 		bind();
-		glFlushMappedBufferRange(type, start * stride_, (start + length) * stride_);
+		glFlushMappedBufferRange(type, start * stride_, length * stride_);
 	}
 	void unmap(){
 		mode = 0;
