@@ -15,6 +15,7 @@
 #include "components/position.h"
 #include "components/velocity.h"
 #include "components/appearance.h"
+#include "components/controllable.h"
 #include "level.h"
 
 Level::Level() : shader_program(0), viewing(), quit(false) {}
@@ -73,10 +74,15 @@ void Level::initialize(){
 	mt_rand.seed(std::time(0));
 	for (int i = 0; i < 10; ++i){
 		entityx::Entity e = entity_manager->create();
-		e.assign<Position>(glm::vec2{static_cast<float>(mt_rand() % 8) - 4,
-			static_cast<float>(mt_rand() % 8) - 4});
-		e.assign<Velocity>(0.25f * glm::vec2{static_cast<float>(mt_rand() % 4) - 2,
-			static_cast<float>(mt_rand() % 4) - 2});
+		if (i == 0){
+			e.assign<Controllable>();
+		}
+		else {
+			e.assign<Position>(glm::vec2{static_cast<float>(mt_rand() % 8) - 4,
+				static_cast<float>(mt_rand() % 8) - 4});
+			e.assign<Velocity>(0.25f * glm::vec2{static_cast<float>(mt_rand() % 4) - 2,
+				static_cast<float>(mt_rand() % 4) - 2});
+		}
 		e.assign<Asteroid>();
 	}
 	viewing.map(GL_WRITE_ONLY);
