@@ -68,10 +68,14 @@ public:
 		data = static_cast<char*>(glMapBufferRange(type, map_start * stride_,
 			length * stride_, flags));
 	}
+	/*
+	 * Flushes some range of the buffer starting at start. The buffer must be bound
+	 * before calling this function
+	 */
 	void flush_range(size_t start, size_t length){
+		assert(data != nullptr);
 		assert(map_end > 0 && map_start <= start && start + length <= map_end
 			&& (mode & GL_MAP_FLUSH_EXPLICIT_BIT));
-		bind();
 		glFlushMappedBufferRange(type, start * stride_, length * stride_);
 	}
 	void unmap(){
