@@ -7,6 +7,8 @@
 namespace detail {
 template<int I, Layout L, typename... Args>
 struct Offset;
+template<Layout L, typename... Args>
+struct AllOffsets;
 template<int I, typename T, typename... Args>
 struct Offset<I, Layout::PACKED, T, Args...> {
 	static_assert(I < sizeof...(Args) + 1, "PackedOffset index out of bounds");
@@ -19,6 +21,32 @@ template<typename T, typename... Args>
 struct Offset<0, Layout::PACKED, T, Args...> {
 	static size_t offset(size_t prev = 0){
 		return prev;
+	}
+};
+template<typename T, typename... Args>
+struct AllOffsets<Layout::PACKED, T, Args...> {
+	static std::array<size_t, 1 + sizeof...(Args)> offsets(){
+		std::array<size_t, sizeof...(Args) + 1> arr;
+		fill_offsets(arr, 0);
+		return arr;
+	}
+	template<size_t N>
+	static void fill_offsets(std::array<size_t, N> &arr, size_t prev){
+		arr[N - sizeof...(Args) - 1] = prev;
+		prev += sizeof(T);
+		AllOffsets<Layout::PACKED, Args...>::fill_offsets(arr, prev);
+	}
+};
+template<typename T>
+struct AllOffsets<Layout::PACKED, T> {
+	static std::array<size_t, 1> offsets(){
+		std::array<size_t, 1> arr;
+		arr[0] = 0;
+		return arr;
+	}
+	template<size_t N>
+	static void fill_offsets(std::array<size_t, N> &arr, size_t prev){
+		arr[N - 1] = prev;
 	}
 };
 template<int I, typename T, typename... Args>

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <tuple>
+#include <array>
 #include <string>
 #include <SDL.h>
 #include <entityx/entityx.h>
@@ -16,8 +17,105 @@ void run(SDL_Window *win);
 //This is just for testing that the alignments/offsets I compute match STD140 in GLSL
 std::string gltype_tostring(GLint type);
 void print_glsl_blocks();
+void test_index_work();
+
+template<typename T>
+GLenum gl_attrib_type();
+template<>
+GLenum gl_attrib_type<float>(){
+	return GL_FLOAT;
+}
+template<>
+GLenum gl_attrib_type<int>(){
+	return GL_INT;
+}
+template<>
+GLenum gl_attrib_type<unsigned>(){
+	return GL_UNSIGNED_INT;
+}
+template<>
+GLenum gl_attrib_type<char>(){
+	return GL_UNSIGNED_BYTE;
+}
+template<>
+GLenum gl_attrib_type<glm::vec2>(){
+	return gl_attrib_type<glm::vec2::value_type>();
+}
+template<>
+GLenum gl_attrib_type<glm::vec3>(){
+	return gl_attrib_type<glm::vec3::value_type>();
+}
+template<>
+GLenum gl_attrib_type<glm::vec4>(){
+	return gl_attrib_type<glm::vec4::value_type>();
+}
+template<>
+GLenum gl_attrib_type<glm::mat4>(){
+	return gl_attrib_type<glm::mat4::value_type>();
+}
+
+template<Layout L, typename... Args>
+struct Test {
+	using Size = detail::Size<L, Args...>;
+	template<int I>
+	using Offset = detail::Offset<I, L, Args...>;
+
+	std::array<size_t, sizeof...(Args)> offsets;
+
+	Test() : offsets(detail::AllOffsets<L, Args...>::offsets())
+	{}
+	void set_indices(const std::array<int, sizeof...(Args)> &indices){
+		set_attrib_index<Args...>(indices);
+	}
+
+private:
+	template<typename T>
+	void set_attrib_index(const std::array<int, sizeof...(Args)> &indices){
+		int i = sizeof...(Args) - 1;
+		std::cout << "Type index " << i << "\n";
+		int index = indices[i];
+		size_t o = offsets[i];
+		GLenum gl_type = gl_attrib_type<T>();
+		std::cout << "Setting attrib for " << typeid(T).name()
+			<< ", index: " << index << ", offset: " << o
+			<<", gl type: " << gltype_tostring(gl_type) << "\n";
+		std::cout << "Need to set " << (sizeof(T) / (4 * sizeof(GLfloat)))
+			<< " attrib indices\n";
+		if (gl_type == GL_FLOAT){
+			std::cout << "glVertexAttribPointer\n";
+		}
+		else {
+			std::cout << "glVertexAttribIPointer\n";
+		}
+		std::cout << "--------\n";
+	}
+	template<typename A, typename B, typename... Attribs>
+	void set_attrib_index(const std::array<int, sizeof...(Args)> &indices){
+		int i = sizeof...(Args) - sizeof...(Attribs) - 2;
+		std::cout << "Type index " << i << "\n";
+		int index = indices[i];
+		size_t o = offsets[i];
+		GLenum gl_type = gl_attrib_type<A>();
+		std::cout << "Setting attrib for " << typeid(A).name()
+			<< ", index: " << index << ", offset: " << o
+			<<", gl type: " << gltype_tostring(gl_type) << "\n";
+		std::cout << "Need to set " << (sizeof(A) / (4 * sizeof(GLfloat)))
+			<< " attrib indices\n";
+		if (gl_type == GL_FLOAT){
+			std::cout << "glVertexAttribPointer\n";
+		}
+		else {
+			std::cout << "glVertexAttribIPointer\n";
+		}
+		std::cout << "--------\n";
+		set_attrib_index<B, Attribs...>(indices);
+	}
+};
 
 int main(int argc, char **argv){
+	test_index_work();
+	return 0;
+
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		std::cerr << "SDL_Init error: " << SDL_GetError() << "\n";
 		return 1;
@@ -73,6 +171,11 @@ void run(SDL_Window *win){
 		SDL_GL_SwapWindow(win);
 		SDL_Delay(16);
 	}
+}
+
+void test_index_work(){
+	Test<Layout::PACKED, glm::mat4, int, float, float> t;
+	t.set_indices({0, 1, 2, 3});
 }
 
 template<size_t I>
@@ -144,6 +247,8 @@ std::string gltype_tostring(GLint type){
 			return "GL_FLOAT_VEC3";
 		case GL_FLOAT_VEC4:
 			return "GL_FLOAT_VEC4";
+		case GL_UNSIGNED_BYTE:
+			return "GL_UNSIGNED_BYTE";
 		case GL_INT:
 			return "GL_INT";
 		case GL_INT_VEC2:
