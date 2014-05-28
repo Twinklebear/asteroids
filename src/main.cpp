@@ -51,6 +51,8 @@ GLenum gl_attrib_type<glm::vec4>(){
 }
 template<>
 GLenum gl_attrib_type<glm::mat4>(){
+	//2x2 and 3x3 matrices get the same column-padding applied as in STD140
+	//it's not worth the hassle to support them as attributes
 	return gl_attrib_type<glm::mat4::value_type>();
 }
 
@@ -79,13 +81,31 @@ private:
 		std::cout << "Setting attrib for " << typeid(T).name()
 			<< ", index: " << index << ", offset: " << o
 			<<", gl type: " << gltype_tostring(gl_type) << "\n";
-		std::cout << "Need to set " << (sizeof(T) / (4 * sizeof(GLfloat)))
-			<< " attrib indices\n";
-		if (gl_type == GL_FLOAT){
-			std::cout << "glVertexAttribPointer\n";
-		}
-		else {
-			std::cout << "glVertexAttribIPointer\n";
+
+		int num_indices = sizeof(T) / (4 * sizeof(GLfloat));
+		num_indices = sizeof(T) % (4 * sizeof(GLfloat)) == 0 ? num_indices : num_indices + 1;
+
+		std::cout << "Need to set " << num_indices << " attrib indices\n";
+		for (int j = 0; j  < num_indices; ++j){
+			if (gl_type == GL_FLOAT){
+				std::cout << "glVertexAttribPointer:\n"
+					<< "  index: " << j + index
+					<< "\n  raw offset: " << o
+					<< "\n  additional offset: " << j * 4 * sizeof(GLfloat)
+					<< "\n";
+			}
+			else {
+				std::cout << "glVertexAttribIPointer:\n"
+					<< "  index: " << j + index
+					<< "\n  raw offset: " << o
+					<< "\n  additional offset: " << j * 4 * sizeof(GLfloat)
+					<< "\n";
+			}
+			std::cout << "glVertexAttribDivisor(" << j + index << ")\n";
+			if (j + index >= 16){
+				std::cerr << "Attribute has spilled over out of the minimum"
+					<< " value for GL_MAX_VERTEX_ATTRIBS (16)\n";
+			}
 		}
 		std::cout << "--------\n";
 	}
@@ -99,13 +119,31 @@ private:
 		std::cout << "Setting attrib for " << typeid(A).name()
 			<< ", index: " << index << ", offset: " << o
 			<<", gl type: " << gltype_tostring(gl_type) << "\n";
-		std::cout << "Need to set " << (sizeof(A) / (4 * sizeof(GLfloat)))
-			<< " attrib indices\n";
-		if (gl_type == GL_FLOAT){
-			std::cout << "glVertexAttribPointer\n";
-		}
-		else {
-			std::cout << "glVertexAttribIPointer\n";
+
+		int num_indices = sizeof(A) / (4 * sizeof(GLfloat));
+		num_indices = sizeof(A) % (4 * sizeof(GLfloat)) == 0 ? num_indices : num_indices + 1;
+
+		std::cout << "Need to set " << num_indices << " attrib indices\n";
+		for (int j = 0; j  < num_indices; ++j){
+			if (gl_type == GL_FLOAT){
+				std::cout << "glVertexAttribPointer:\n"
+					<< "  index: " << j + index
+					<< "\n  raw offset: " << o
+					<< "\n  additional offset: " << j * 4 * sizeof(GLfloat)
+					<< "\n";
+			}
+			else {
+				std::cout << "glVertexAttribIPointer:\n"
+					<< "  index: " << j + index
+					<< "\n  raw offset: " << o
+					<< "\n  additional offset: " << j * 4 * sizeof(GLfloat)
+					<< "\n";
+			}
+			std::cout << "glVertexAttribDivisor(" << j + index << ")\n";
+			if (j + index >= indices[i + 1]){
+				std::cerr << "Attribute has spilled over into attribute "
+					<< indices[i + 1] << "'s index space\n";
+			}
 		}
 		std::cout << "--------\n";
 		set_attrib_index<B, Attribs...>(indices);
@@ -174,8 +212,8 @@ void run(SDL_Window *win){
 }
 
 void test_index_work(){
-	Test<Layout::PACKED, glm::mat4, int, float, float> t;
-	t.set_indices({0, 1, 2, 3});
+	Test<Layout::PACKED, glm::mat4, int, glm::vec3, glm::vec4, glm::mat4> t;
+	t.set_indices({0, 1, 2, 3, 4});
 }
 
 template<size_t I>
