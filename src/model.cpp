@@ -3,7 +3,7 @@
 #include <string>
 #include <glm/glm.hpp>
 #include "util.h"
-#include "buffer_offset.h"
+#include "layout_offset.h"
 #include "interleavedbuffer.h"
 #include "model.h"
 

@@ -2,7 +2,7 @@
 #define BUFFER_OFFSET_H
 
 #include "std140_array.h"
-#include "buffer_size.h"
+#include "layout_size.h"
 
 namespace detail {
 template<int I, Layout L, typename... Args>
@@ -65,10 +65,48 @@ struct Offset<0, Layout::ALIGNED, T, Args...> {
 		return prev;
 	}
 };
+template<typename T, typename... Args>
+struct AllOffsets<Layout::ALIGNED, T, Args...> {
+	static std::array<size_t, 1 + sizeof...(Args)> offsets(){
+		std::array<size_t, sizeof...(Args) + 1> arr;
+		arr[0] = 0;
+		AllOffsets<Layout::ALIGNED, Args...>::fill_offsets(arr, sizeof(T));
+		return arr;
+	}
+	template<size_t N>
+	static void fill_offsets(std::array<size_t, N> &arr, size_t prev){
+		size_t pad = Padding<Layout::ALIGNED, T>::pad(prev);
+		arr[N - sizeof...(Args) - 1] = prev + pad;
+		std::cout << "Set offset for " << N - sizeof...(Args) - 1
+			<< " to " << prev + pad << "\n";
+		prev = Size<Layout::ALIGNED, T>::size(prev + pad);
+		std::cout << "occupies until " << prev << "\n";
+		AllOffsets<Layout::ALIGNED, Args...>::fill_offsets(arr, prev);
+	}
+};
+template<typename T>
+struct AllOffsets<Layout::ALIGNED, T> {
+	static std::array<size_t, 1> offsets(){
+		std::array<size_t, 1> arr;
+		arr[0] = 0;
+		return arr;
+	}
+	template<size_t N>
+	static void fill_offsets(std::array<size_t, N> &arr, size_t prev){
+		size_t pad = Padding<Layout::ALIGNED, T>::pad(prev);
+		arr[N - 1] = prev + pad;
+		std::cout << "Set offset for " << N - 1
+			<< " to " << prev + pad << "\n";
+		std::cout << "occupies until " << prev + pad + sizeof(T) << "\n";
+	}
+};
 template<int I, typename T, typename... Args>
 struct Offset<I, Layout::STD140, T, Args...> {
 	static_assert(I < sizeof...(Args) + 1, "STD140Offset index out of bounds");
 	static size_t offset(size_t prev = 0){
+		//Repeating all the specializations for STD140 will be a huge pain.
+		//should instead have something that returns the padding that should
+		//be applied in front of the object given some alignment
 		prev = Size<Layout::STD140, T>::size(prev);
 		return Offset<I - 1, Layout::STD140, Args...>::offset(prev);
 	}

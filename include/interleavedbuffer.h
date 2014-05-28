@@ -6,8 +6,8 @@
 #include "gl_core_3_3.h"
 #include "deleters.h"
 #include "type_at.h"
-#include "buffer_size.h"
-#include "buffer_offset.h"
+#include "layout_size.h"
+#include "layout_offset.h"
 
 //A fixed capacity interleaved buffer stored on the device
 template<Layout L, typename... Args>

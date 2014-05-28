@@ -12,6 +12,7 @@
 #include "renderbatch.h"
 #include "model.h"
 #include "level.h"
+#include "layout_padding.h"
 
 void run(SDL_Window *win);
 //This is just for testing that the alignments/offsets I compute match STD140 in GLSL
@@ -212,8 +213,8 @@ void run(SDL_Window *win){
 }
 
 void test_index_work(){
-	Test<Layout::PACKED, glm::mat4, int, glm::vec3, glm::vec4, glm::mat4> t;
-	t.set_indices({0, 1, 2, 3, 4});
+	Test<Layout::ALIGNED, char, float, glm::mat4> t;
+	//t.set_indices({0, 1, 2});
 }
 
 template<size_t I>
