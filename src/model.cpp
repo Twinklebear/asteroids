@@ -1,4 +1,5 @@
 #include <iostream>
+#include <array>
 #include <memory>
 #include <string>
 #include <glm/glm.hpp>
@@ -7,7 +8,9 @@
 #include "interleavedbuffer.h"
 #include "model.h"
 
-Model::Model(const std::string &file) : vao(nullptr), vbo(), ebo(), n_elems(0){
+Model::Model(const std::string &file) : vao(nullptr), vbo(), ebo(), n_elems(0),
+	offsets(detail::Offset<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>::offsets())
+{
 	load(file);
 }
 void Model::bind(){
@@ -29,10 +32,8 @@ void Model::load(const std::string &file){
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vbo.stride(), 0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vbo.stride(),
-		(void*)(detail::Offset<1, Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>::offset()));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vbo.stride(), (void*)(offsets[1]));
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vbo.stride(),
-		(void*)(detail::Offset<2, Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>::offset()));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vbo.stride(), (void*)(offsets[2]));
 }
 

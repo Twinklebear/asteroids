@@ -59,13 +59,9 @@ GLenum gl_attrib_type<glm::mat4>(){
 
 template<Layout L, typename... Args>
 struct Test {
-	using Size = detail::Size<L, Args...>;
-	template<int I>
-	using Offset = detail::Offset<I, L, Args...>;
-
 	std::array<size_t, sizeof...(Args)> offsets;
 
-	Test() : offsets(detail::AllOffsets<L, Args...>::offsets())
+	Test() : offsets(detail::Offset<L, Args...>::offsets())
 	{}
 	void set_indices(const std::array<int, sizeof...(Args)> &indices){
 		set_attrib_index<Args...>(indices);
@@ -217,8 +213,7 @@ void test_index_work(){
 	//t.set_indices({0, 1, 2});
 }
 
-template<size_t I>
-using Offset = detail::Offset<I, Layout::STD140, glm::mat4, float,
+using Offset = detail::Offset<Layout::STD140, glm::mat4, float,
 	STD140Array<float, 10>, int, STD140Array<int, 5>>;
 using Size = detail::Size<Layout::STD140, glm::mat4, float,
 	STD140Array<float, 10>, int, STD140Array<int, 5>>;
@@ -269,12 +264,11 @@ void print_glsl_blocks(){
 	glDeleteProgram(program);
 
 	std::cout << "Computed Size: " << Size::size() << "\n";
-	std::cout << "Offset of first: " << Offset<0>::offset()
-		<< "\nSecond: " << Offset<1>::offset()
-		<< "\nThird: " << Offset<2>::offset()
-		<< "\nFourth: " << Offset<3>::offset()
-		<< "\nFifth: " << Offset<4>::offset()
-		<< "\n";
+	std::array<size_t, 5> offsets = Offset::offsets();
+	for (size_t i = 0; i < 5; ++i){
+		std::cout << "Offset of " << i << " = "
+			<< offsets[i] << "\n";
+	}
 }
 std::string gltype_tostring(GLint type){
 	switch (type){

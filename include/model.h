@@ -1,6 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <array>
 #include <memory>
 #include <string>
 #include "interleavedbuffer.h"
@@ -13,6 +14,7 @@ class Model {
 	InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3> vbo;
 	InterleavedBuffer<Layout::PACKED, GLushort> ebo;
 	size_t n_elems;
+	std::array<size_t, 3> offsets;
 
 public:
 	/*
