@@ -133,6 +133,10 @@ public:
 	size_t stride() const {
 		return stride_;
 	}
+	size_t offset(size_t i) const {
+		assert(i < sizeof...(Args));
+		return offsets[i];
+	}
 
 private:
 	template<size_t I>

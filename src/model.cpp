@@ -8,9 +8,7 @@
 #include "interleavedbuffer.h"
 #include "model.h"
 
-Model::Model(const std::string &file) : vao(nullptr), vbo(), ebo(), n_elems(0),
-	offsets(detail::Offset<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>::offsets())
-{
+Model::Model(const std::string &file) : vao(nullptr), vbo(), ebo(), n_elems(0){
 	load(file);
 }
 void Model::bind(){
@@ -29,11 +27,11 @@ void Model::load(const std::string &file){
 	glBindVertexArray(*vao);
 	ebo.bind();
 	vbo.bind();
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vbo.stride(), 0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vbo.stride(), (void*)(offsets[1]));
+	for (int i = 0; i < 2; ++i){
+		glEnableVertexAttribArray(i);
+		glVertexAttribPointer(i, 3, GL_FLOAT, GL_FALSE, vbo.stride(), (void*)vbo.offset(i));
+	}
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vbo.stride(), (void*)(offsets[2]));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vbo.stride(), (void*)(vbo.offset(2)));
 }
 

@@ -148,9 +148,6 @@ private:
 };
 
 int main(int argc, char **argv){
-	test_index_work();
-	return 0;
-
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		std::cerr << "SDL_Init error: " << SDL_GetError() << "\n";
 		return 1;

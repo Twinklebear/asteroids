@@ -14,7 +14,6 @@ class Model {
 	InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3> vbo;
 	InterleavedBuffer<Layout::PACKED, GLushort> ebo;
 	size_t n_elems;
-	std::array<size_t, 3> offsets;
 
 public:
 	/*
