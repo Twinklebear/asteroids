@@ -111,6 +111,43 @@ struct Offset<I, Layout::STD140, T, Args...> {
 		return Offset<I - 1, Layout::STD140, Args...>::offset(prev);
 	}
 };
+
+template<typename T, typename... Args>
+struct AllOffsets<Layout::STD140, T, Args...> {
+	static std::array<size_t, 1 + sizeof...(Args)> offsets(){
+		std::array<size_t, sizeof...(Args) + 1> arr;
+		arr[0] = 0;
+		AllOffsets<Layout::STD140, Args...>::fill_offsets(arr, sizeof(T));
+		return arr;
+	}
+	template<size_t N>
+	static void fill_offsets(std::array<size_t, N> &arr, size_t prev){
+		size_t pad = Padding<Layout::STD140, T>::pad(prev);
+		arr[N - sizeof...(Args) - 1] = prev + pad;
+		std::cout << "Set offset for " << N - sizeof...(Args) - 1
+			<< " to " << prev + pad << "\n";
+		prev = Size<Layout::STD140, T>::size(prev + pad);
+		std::cout << "occupies until " << prev << "\n";
+		AllOffsets<Layout::STD140, Args...>::fill_offsets(arr, prev);
+	}
+};
+template<typename T>
+struct AllOffsets<Layout::STD140, T> {
+	static std::array<size_t, 1> offsets(){
+		std::array<size_t, 1> arr;
+		arr[0] = 0;
+		return arr;
+	}
+	template<size_t N>
+	static void fill_offsets(std::array<size_t, N> &arr, size_t prev){
+		size_t pad = Padding<Layout::STD140, T>::pad(prev);
+		arr[N - 1] = prev + pad;
+		std::cout << "Set offset for " << N - 1
+			<< " to " << prev + pad << "\n";
+		std::cout << "occupies until " << prev + pad + sizeof(T) << "\n";
+	}
+};
+
 template<typename T, typename... Args>
 struct Offset<0, Layout::STD140, T, Args...> {
 	static size_t offset(size_t prev = 0){

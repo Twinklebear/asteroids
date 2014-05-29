@@ -213,7 +213,7 @@ void run(SDL_Window *win){
 }
 
 void test_index_work(){
-	Test<Layout::ALIGNED, char, float, glm::mat4> t;
+	Test<Layout::STD140, glm::vec3, glm::vec2, glm::vec3, glm::mat4> t;
 	//t.set_indices({0, 1, 2});
 }
 
