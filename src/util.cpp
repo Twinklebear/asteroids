@@ -228,8 +228,8 @@ void util::gldebug_callback(GLenum src, GLenum type, GLuint id, GLenum severity,
 	std::cerr << ":\n\t" << msg << "\n";
 }
 bool util::load_obj(const std::string &fname,
-	InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3> &vbo,
-	InterleavedBuffer<Layout::ALIGNED, GLushort> &ebo, size_t &n_elems)
+	InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3> &vbo,
+	InterleavedBuffer<Layout::PACKED, GLushort> &ebo, size_t &n_elems)
 {
 	std::ifstream file(fname);
 	if (!file.is_open()){
@@ -289,7 +289,7 @@ bool util::load_obj(const std::string &fname,
 		}
 	}
 	n_elems = indices.size();
-	vbo = InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3>(n_elems, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+	vbo = InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>(n_elems, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 	vbo.map(GL_WRITE_ONLY);
 	for (size_t i = 0; i < n_elems; ++i){
 		vbo.write<0>(i) = vert_data[3 * i];
@@ -297,7 +297,7 @@ bool util::load_obj(const std::string &fname,
 		vbo.write<2>(i) = vert_data[3 * i + 2];
 	}
 	vbo.unmap();
-	ebo = InterleavedBuffer<Layout::ALIGNED, GLushort>(n_elems, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+	ebo = InterleavedBuffer<Layout::PACKED, GLushort>(n_elems, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
 	ebo.map(GL_WRITE_ONLY);
 	for (size_t i = 0; i < indices.size(); ++i){
 		ebo.write<0>(i) = indices[i];

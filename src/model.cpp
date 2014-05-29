@@ -30,9 +30,9 @@ void Model::load(const std::string &file){
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vbo.stride(), 0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, vbo.stride(),
-		(void*)(detail::Offset<1, Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3>::offset()));
+		(void*)(detail::Offset<1, Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>::offset()));
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vbo.stride(),
-		(void*)(detail::Offset<2, Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3>::offset()));
+		(void*)(detail::Offset<2, Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>::offset()));
 }
 

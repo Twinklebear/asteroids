@@ -49,22 +49,7 @@ struct AllOffsets<Layout::PACKED, T> {
 		arr[N - 1] = prev;
 	}
 };
-template<int I, typename T, typename... Args>
-struct Offset<I, Layout::ALIGNED, T, Args...> {
-	static_assert(I < sizeof...(Args) + 1, "AlignedOffset index out of bounds");
-	static size_t offset(size_t prev = 0){
-		prev = Size<Layout::ALIGNED, T>::size(prev);
-		return Offset<I - 1, Layout::ALIGNED, Args...>::offset(prev);
-	}
-};
-template<typename T, typename... Args>
-struct Offset<0, Layout::ALIGNED, T, Args...> {
-	static size_t offset(size_t prev = 0){
-		prev = prev % alignof(T) == 0 ? prev
-			: prev + alignof(T) - prev % alignof(T);
-		return prev;
-	}
-};
+/*
 template<typename T, typename... Args>
 struct AllOffsets<Layout::ALIGNED, T, Args...> {
 	static std::array<size_t, 1 + sizeof...(Args)> offsets(){
@@ -100,6 +85,7 @@ struct AllOffsets<Layout::ALIGNED, T> {
 		std::cout << "occupies until " << prev + pad + sizeof(T) << "\n";
 	}
 };
+*/
 template<int I, typename T, typename... Args>
 struct Offset<I, Layout::STD140, T, Args...> {
 	static_assert(I < sizeof...(Args) + 1, "STD140Offset index out of bounds");

@@ -8,7 +8,7 @@
  * before some type T in a buffer where the previous object ends
  * at prev
  */
-enum class Layout { PACKED, ALIGNED, STD140 };
+enum class Layout { PACKED, STD140 };
 namespace detail {
 template<Layout L, typename T>
 struct Padding;
@@ -19,21 +19,6 @@ template<typename T>
 struct Padding<Layout::PACKED, T> {
 	static constexpr size_t pad(size_t prev = 0){
 		return 0;
-	}
-};
-/*
- * Aligned layout pads elements out to their host alignment
- * which is maybe kinda sort of near what the GPU likes
- */
-template<typename T>
-struct Padding<Layout::ALIGNED, T> {
-	static size_t pad(size_t prev = 0){
-		size_t padded = prev % alignof(T) == 0 ? prev
-			: prev + alignof(T) - prev % alignof(T);
-		std::cout << "padded is " << padded
-			<< ", prev is " << prev
-			<< " applying padding " << padded - prev << "\n";
-		return padded - prev;
 	}
 };
 /*

@@ -59,8 +59,8 @@ namespace util {
 	* TODO: Take any buffer layout?
 	*/
 	bool load_obj(const std::string &fname,
-		InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3> &vbo,
-		InterleavedBuffer<Layout::ALIGNED, GLushort> &ebo, size_t &n_elems);
+		InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3> &vbo,
+		InterleavedBuffer<Layout::PACKED, GLushort> &ebo, size_t &n_elems);
 	/*
 	* Functions to get values from formatted strings, for use in reading the
 	* model file
