@@ -6,6 +6,7 @@
 #include <entityx/deps/Dependencies.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <lfwatch.h>
 #include "util.h"
 #include "interleavedbuffer.h"
 #include "events/input_event.h"
@@ -24,6 +25,27 @@ Level::~Level(){
 }
 void Level::receive(const InputEvent &input){
 	std::cout << "Received event: ";
+	if (input.event.type == file_watcher.event()){
+		lfw::EventData *data = static_cast<lfw::EventData*>(input.event.user.data1);
+		std::cout << "Change last write event in " << data->dir
+				<< " on file: " << data->fname << "\n";
+		if (data->fname == "vertex.glsl" || data->fname == "fragment.glsl"){
+			std::cout << "Shader hot reload!\n";
+			GLint shader = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
+				std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
+			if (shader == -1){
+				std::cerr << "Error compiling reloaded shader, cancelling...\n";
+			}
+			else {
+				glUseProgram(shader);
+				glDeleteProgram(shader_program);
+				shader_program = shader;
+			}
+		}
+		delete data;
+		return;
+	}
+
 	switch (input.event.type){
 		case SDL_KEYDOWN:
 			std::cout << "SDL_KEYDOWN\n";
@@ -68,6 +90,7 @@ void Level::configure(){
 	viewing = InterleavedBuffer<Layout::PACKED, glm::mat4>{2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	assert(shader_program != -1);
 	event_manager->subscribe<InputEvent>(*this);
+	file_watcher.watch("../res", lfw::Notify::CHANGE_LAST_WRITE);
 }
 void Level::initialize(){
 	std::mt19937 mt_rand;
@@ -96,6 +119,7 @@ void Level::initialize(){
 	glUseProgram(shader_program);
 }
 void Level::update(double dt){
+	file_watcher.update();
 	system_manager->update<InputSystem>(dt);
 	system_manager->update<MovementSystem>(dt);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

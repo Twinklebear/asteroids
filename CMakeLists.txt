@@ -10,6 +10,7 @@ set(entityx_DIR "${Asteroids_SOURCE_DIR}/external/entityx")
 # Later should handle multiple possible build configurations per:
 # https://stackoverflow.com/questions/6351609/cmake-linking-to-library-downloaded-from-externalproject-add
 set(entityx_LIBRARY "${entityx_DIR}/lib/libentityx.a")
+set(entityx_INCLUDE_DIR "${entityx_DIR}/include")
 
 ExternalProject_Add(entityx
 	PREFIX ${entityx_DIR}
@@ -17,6 +18,16 @@ ExternalProject_Add(entityx
 	GIT_TAG origin/0.1.x
 	INSTALL_DIR ${entityx_DIR}
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${entityx_DIR}
+)
+
+set(lfwatch_DIR "${Asteroids_SOURCE_DIR}/external/lfwatch")
+set(lfwatch_LIBRARY "${lfwatch_DIR}/lib/liblfwatch.a")
+set(lfwatch_INCLUDE_DIR "${lfwatch_DIR}/include")
+ExternalProject_Add(lfwatch
+	PREFIX ${lfwatch_DIR}
+	GIT_REPOSITORY https://github.com/Twinklebear/lfwatch.git
+	INSTALL_DIR ${lfwatch_DIR}
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${lfwatch_DIR}
 )
 
 # Bump up warning levels appropriately for each compiler
@@ -39,6 +50,7 @@ if (WIN32)
 	include_directories(${GLM_INCLUDE_DIRS})
 endif()
 
-include_directories(include ${entityx_DIR}/include ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
+include_directories(include ${entityx_INCLUDE_DIR} ${lfwatch_INCLUDE_DIR}
+   ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
 add_subdirectory(src)
 
