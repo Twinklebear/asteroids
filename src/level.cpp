@@ -46,7 +46,7 @@ void Level::configure(){
 	assert(shader_program != -1);
 	event_manager->subscribe<InputEvent>(*this);
 	file_watcher.watch("../res", lfw::Notify::FILE_MODIFIED,
-		[this](lfw::EventData e){
+		[this](const lfw::EventData &e){
 			if (e.fname == "vertex.glsl" || e.fname == "fragment.glsl"){
 				this->load_shader();
 			}
