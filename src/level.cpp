@@ -24,23 +24,6 @@ Level::~Level(){
 	glDeleteProgram(shader_program);
 }
 void Level::receive(const InputEvent &input){
-	if (input.event.type == file_watcher.event()){
-		lfw::EventData *data = static_cast<lfw::EventData*>(input.event.user.data1);
-		if (data->fname == "vertex.glsl" || data->fname == "fragment.glsl"){
-			GLint shader = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
-				std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
-			if (shader == -1){
-				std::cerr << "Error compiling reloaded shader, cancelling...\n";
-			}
-			else {
-				glUseProgram(shader);
-				glDeleteProgram(shader_program);
-				shader_program = shader;
-			}
-		}
-		delete data;
-		return;
-	}
 	switch (input.event.type){
 		case SDL_KEYDOWN:
 			quit = input.event.key.keysym.sym == SDLK_ESCAPE;
@@ -62,7 +45,12 @@ void Level::configure(){
 	viewing = InterleavedBuffer<Layout::PACKED, glm::mat4>{2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	assert(shader_program != -1);
 	event_manager->subscribe<InputEvent>(*this);
-	file_watcher.watch("../res", lfw::Notify::CHANGE_LAST_WRITE);
+	file_watcher.watch("../res", lfw::Notify::FILE_MODIFIED,
+		[this](lfw::EventData e){
+			if (e.fname == "vertex.glsl" || e.fname == "fragment.glsl"){
+				this->load_shader();
+			}
+		});
 }
 void Level::initialize(){
 	std::mt19937 mt_rand;
@@ -96,5 +84,17 @@ void Level::update(double dt){
 	system_manager->update<MovementSystem>(dt);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	system_manager->update<AsteroidSystem>(dt);
+}
+void Level::load_shader(){
+	GLint shader = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
+			std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
+	if (shader == -1){
+		std::cerr << "Error compiling reloaded shader, cancelling...\n";
+	}
+	else {
+		glUseProgram(shader);
+		glDeleteProgram(shader_program);
+		shader_program = shader;
+	}
 }
 

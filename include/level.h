@@ -23,6 +23,9 @@ protected:
 	void configure() override;
 	void initialize() override;
 	void update(double dt) override;
+
+private:
+	void load_shader();
 };
 
 #endif
