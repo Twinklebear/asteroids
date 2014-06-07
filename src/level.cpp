@@ -25,6 +25,9 @@ Level::~Level(){
 }
 void Level::receive(const InputEvent &input){
 	switch (input.event.type){
+		case SDL_QUIT:
+			quit = true;
+			break;
 		case SDL_KEYDOWN:
 			quit = input.event.key.keysym.sym == SDLK_ESCAPE;
 			break;
