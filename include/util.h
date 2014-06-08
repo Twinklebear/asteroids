@@ -14,6 +14,10 @@ namespace util {
 		return deg * 0.01745f;
 	}
 	/*
+	 * Get the resource path for resources located in res/sub_dir
+	 */
+	std::string get_resource_path(const std::string &sub_dir = "");
+	/*
 	* Read the entire contents of a file into a string, if an error occurs
 	* the string will be empty
 	*/
@@ -59,8 +63,8 @@ namespace util {
 	* TODO: Take any buffer layout?
 	*/
 	bool load_obj(const std::string &fname,
-		InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3> &vbo,
-		InterleavedBuffer<Layout::ALIGNED, GLushort> &ebo, size_t &n_elems);
+		InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3> &vbo,
+		InterleavedBuffer<Layout::PACKED, GLushort> &ebo, size_t &n_elems);
 	/*
 	* Functions to get values from formatted strings, for use in reading the
 	* model file

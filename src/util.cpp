@@ -11,6 +11,33 @@
 #include "gl_core_3_3.h"
 #include "util.h"
 
+std::string util::get_resource_path(const std::string &sub_dir){
+#ifdef _WIN32
+	const char PATH_SEP = '\\';
+#else
+	const char PATH_SEP = '/';
+#endif
+	static std::string base_res;
+	if (base_res.empty()){
+		char *base_path = SDL_GetBasePath();
+		if (base_path){
+			base_res = base_path;
+			SDL_free(base_path);
+		}
+		else {
+			std::cerr << "Error getting resource path: " << SDL_GetError() << std::endl;
+			return "";
+		}
+		//The final part of the string should be bin/ so replace it with res/ to
+		//get what the lessons use for the resource path
+		size_t pos = base_res.find_last_of("bin") - 2;
+		base_res = base_res.substr(0, pos) + "res" + PATH_SEP;
+	}
+	if (sub_dir.empty()){
+		return base_res;
+	}
+	return base_res + sub_dir + PATH_SEP;
+}
 std::string util::read_file(const std::string &fName){
 	std::ifstream file(fName);
 	if (!file.is_open()){
@@ -228,8 +255,8 @@ void util::gldebug_callback(GLenum src, GLenum type, GLuint id, GLenum severity,
 	std::cerr << ":\n\t" << msg << "\n";
 }
 bool util::load_obj(const std::string &fname,
-	InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3> &vbo,
-	InterleavedBuffer<Layout::ALIGNED, GLushort> &ebo, size_t &n_elems)
+	InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3> &vbo,
+	InterleavedBuffer<Layout::PACKED, GLushort> &ebo, size_t &n_elems)
 {
 	std::ifstream file(fname);
 	if (!file.is_open()){
@@ -288,16 +315,17 @@ bool util::load_obj(const std::string &fname,
 			}
 		}
 	}
-	n_elems = indices.size();
-	vbo = InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3>(n_elems, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+	vbo = InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>(vert_data.size() / 3,
+		GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 	vbo.map(GL_WRITE_ONLY);
-	for (size_t i = 0; i < n_elems; ++i){
+	for (size_t i = 0; i < vert_data.size() / 3; ++i){
 		vbo.write<0>(i) = vert_data[3 * i];
 		vbo.write<1>(i) = vert_data[3 * i + 1];
 		vbo.write<2>(i) = vert_data[3 * i + 2];
 	}
 	vbo.unmap();
-	ebo = InterleavedBuffer<Layout::ALIGNED, GLushort>(n_elems, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+	n_elems = indices.size();
+	ebo = InterleavedBuffer<Layout::PACKED, GLushort>(indices.size(), GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
 	ebo.map(GL_WRITE_ONLY);
 	for (size_t i = 0; i < indices.size(); ++i){
 		ebo.write<0>(i) = indices[i];

@@ -1,6 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <array>
 #include <memory>
 #include <string>
 #include "interleavedbuffer.h"
@@ -10,8 +11,8 @@
  */
 class Model {
 	std::shared_ptr<GLuint> vao;
-	InterleavedBuffer<Layout::ALIGNED, glm::vec3, glm::vec3, glm::vec3> vbo;
-	InterleavedBuffer<Layout::ALIGNED, GLushort> ebo;
+	InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3> vbo;
+	InterleavedBuffer<Layout::PACKED, GLushort> ebo;
 	size_t n_elems;
 
 public:

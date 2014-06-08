@@ -1,5 +1,6 @@
 #include <iostream>
 #include <tuple>
+#include <array>
 #include <string>
 #include <SDL.h>
 #include <entityx/entityx.h>
@@ -11,11 +12,140 @@
 #include "renderbatch.h"
 #include "model.h"
 #include "level.h"
+#include "layout_padding.h"
 
 void run(SDL_Window *win);
 //This is just for testing that the alignments/offsets I compute match STD140 in GLSL
 std::string gltype_tostring(GLint type);
 void print_glsl_blocks();
+void test_index_work();
+
+template<typename T>
+GLenum gl_attrib_type();
+template<>
+GLenum gl_attrib_type<float>(){
+	return GL_FLOAT;
+}
+template<>
+GLenum gl_attrib_type<int>(){
+	return GL_INT;
+}
+template<>
+GLenum gl_attrib_type<unsigned>(){
+	return GL_UNSIGNED_INT;
+}
+template<>
+GLenum gl_attrib_type<char>(){
+	return GL_UNSIGNED_BYTE;
+}
+template<>
+GLenum gl_attrib_type<glm::vec2>(){
+	return gl_attrib_type<glm::vec2::value_type>();
+}
+template<>
+GLenum gl_attrib_type<glm::vec3>(){
+	return gl_attrib_type<glm::vec3::value_type>();
+}
+template<>
+GLenum gl_attrib_type<glm::vec4>(){
+	return gl_attrib_type<glm::vec4::value_type>();
+}
+template<>
+GLenum gl_attrib_type<glm::mat4>(){
+	//2x2 and 3x3 matrices get the same column-padding applied as in STD140
+	//it's not worth the hassle to support them as attributes
+	return gl_attrib_type<glm::mat4::value_type>();
+}
+
+template<Layout L, typename... Args>
+struct Test {
+	std::array<size_t, sizeof...(Args)> offsets;
+
+	Test() : offsets(detail::Offset<L, Args...>::offsets())
+	{}
+	void set_indices(const std::array<int, sizeof...(Args)> &indices){
+		set_attrib_index<Args...>(indices);
+	}
+
+private:
+	template<typename T>
+	void set_attrib_index(const std::array<int, sizeof...(Args)> &indices){
+		int i = sizeof...(Args) - 1;
+		std::cout << "Type index " << i << "\n";
+		int index = indices[i];
+		size_t o = offsets[i];
+		GLenum gl_type = gl_attrib_type<T>();
+		std::cout << "Setting attrib for " << typeid(T).name()
+			<< ", index: " << index << ", offset: " << o
+			<<", gl type: " << gltype_tostring(gl_type) << "\n";
+
+		int num_indices = sizeof(T) / (4 * sizeof(GLfloat));
+		num_indices = sizeof(T) % (4 * sizeof(GLfloat)) == 0 ? num_indices : num_indices + 1;
+
+		std::cout << "Need to set " << num_indices << " attrib indices\n";
+		for (int j = 0; j  < num_indices; ++j){
+			if (gl_type == GL_FLOAT){
+				std::cout << "glVertexAttribPointer:\n"
+					<< "  index: " << j + index
+					<< "\n  raw offset: " << o
+					<< "\n  additional offset: " << j * 4 * sizeof(GLfloat)
+					<< "\n";
+			}
+			else {
+				std::cout << "glVertexAttribIPointer:\n"
+					<< "  index: " << j + index
+					<< "\n  raw offset: " << o
+					<< "\n  additional offset: " << j * 4 * sizeof(GLfloat)
+					<< "\n";
+			}
+			std::cout << "glVertexAttribDivisor(" << j + index << ")\n";
+			if (j + index >= 16){
+				std::cerr << "Attribute has spilled over out of the minimum"
+					<< " value for GL_MAX_VERTEX_ATTRIBS (16)\n";
+			}
+		}
+		std::cout << "--------\n";
+	}
+	template<typename A, typename B, typename... Attribs>
+	void set_attrib_index(const std::array<int, sizeof...(Args)> &indices){
+		int i = sizeof...(Args) - sizeof...(Attribs) - 2;
+		std::cout << "Type index " << i << "\n";
+		int index = indices[i];
+		size_t o = offsets[i];
+		GLenum gl_type = gl_attrib_type<A>();
+		std::cout << "Setting attrib for " << typeid(A).name()
+			<< ", index: " << index << ", offset: " << o
+			<<", gl type: " << gltype_tostring(gl_type) << "\n";
+
+		int num_indices = sizeof(A) / (4 * sizeof(GLfloat));
+		num_indices = sizeof(A) % (4 * sizeof(GLfloat)) == 0 ? num_indices : num_indices + 1;
+
+		std::cout << "Need to set " << num_indices << " attrib indices\n";
+		for (int j = 0; j  < num_indices; ++j){
+			if (gl_type == GL_FLOAT){
+				std::cout << "glVertexAttribPointer:\n"
+					<< "  index: " << j + index
+					<< "\n  raw offset: " << o
+					<< "\n  additional offset: " << j * 4 * sizeof(GLfloat)
+					<< "\n";
+			}
+			else {
+				std::cout << "glVertexAttribIPointer:\n"
+					<< "  index: " << j + index
+					<< "\n  raw offset: " << o
+					<< "\n  additional offset: " << j * 4 * sizeof(GLfloat)
+					<< "\n";
+			}
+			std::cout << "glVertexAttribDivisor(" << j + index << ")\n";
+			if (j + index >= indices[i + 1]){
+				std::cerr << "Attribute has spilled over into attribute "
+					<< indices[i + 1] << "'s index space\n";
+			}
+		}
+		std::cout << "--------\n";
+		set_attrib_index<B, Attribs...>(indices);
+	}
+};
 
 int main(int argc, char **argv){
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
@@ -75,8 +205,12 @@ void run(SDL_Window *win){
 	}
 }
 
-template<size_t I>
-using Offset = detail::Offset<I, Layout::STD140, glm::mat4, float,
+void test_index_work(){
+	Test<Layout::STD140, glm::vec3, glm::vec2, glm::vec3, glm::mat4> t;
+	//t.set_indices({0, 1, 2});
+}
+
+using Offset = detail::Offset<Layout::STD140, glm::mat4, float,
 	STD140Array<float, 10>, int, STD140Array<int, 5>>;
 using Size = detail::Size<Layout::STD140, glm::mat4, float,
 	STD140Array<float, 10>, int, STD140Array<int, 5>>;
@@ -127,12 +261,11 @@ void print_glsl_blocks(){
 	glDeleteProgram(program);
 
 	std::cout << "Computed Size: " << Size::size() << "\n";
-	std::cout << "Offset of first: " << Offset<0>::offset()
-		<< "\nSecond: " << Offset<1>::offset()
-		<< "\nThird: " << Offset<2>::offset()
-		<< "\nFourth: " << Offset<3>::offset()
-		<< "\nFifth: " << Offset<4>::offset()
-		<< "\n";
+	std::array<size_t, 5> offsets = Offset::offsets();
+	for (size_t i = 0; i < 5; ++i){
+		std::cout << "Offset of " << i << " = "
+			<< offsets[i] << "\n";
+	}
 }
 std::string gltype_tostring(GLint type){
 	switch (type){
@@ -144,6 +277,8 @@ std::string gltype_tostring(GLint type){
 			return "GL_FLOAT_VEC3";
 		case GL_FLOAT_VEC4:
 			return "GL_FLOAT_VEC4";
+		case GL_UNSIGNED_BYTE:
+			return "GL_UNSIGNED_BYTE";
 		case GL_INT:
 			return "GL_INT";
 		case GL_INT_VEC2:

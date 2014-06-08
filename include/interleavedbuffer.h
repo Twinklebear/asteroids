@@ -2,12 +2,13 @@
 #define INTERLEAVED_BUFFER_H
 
 #include <cassert>
+#include <array>
 #include <memory>
 #include "gl_core_3_3.h"
 #include "deleters.h"
 #include "type_at.h"
-#include "buffer_size.h"
-#include "buffer_offset.h"
+#include "layout_size.h"
+#include "layout_offset.h"
 
 //A fixed capacity interleaved buffer stored on the device
 template<Layout L, typename... Args>
@@ -19,18 +20,20 @@ class InterleavedBuffer {
 	//Used for tracking where a mapped range begins and ends
 	//if a range isn't mapped end is 0
 	size_t map_start, map_end;
+	std::array<size_t, sizeof...(Args)> offsets;
 
 	using Size = detail::Size<L, Args...>;
-	template<int I>
-	using Offset = detail::Offset<I, L, Args...>;
+	using Offset = detail::Offset<L, Args...>;
 
 public:
 	InterleavedBuffer() : capacity(0), stride_(0), buffer(nullptr),
-		mode(0), type(0), access(0), data(nullptr), map_start(0), map_end(0)
+		mode(0), type(0), access(0), data(nullptr), map_start(0), map_end(0),
+		offsets(Offset::offsets())
 	{}
 	InterleavedBuffer(size_t capacity, GLenum type, GLenum access)
 		: capacity(capacity), stride_(Size::size()), buffer(nullptr),
-		mode(0), type(type), access(access), data(nullptr), map_start(0), map_end(0)
+		mode(0), type(type), access(access), data(nullptr), map_start(0), map_end(0),
+		offsets(Offset::offsets())
 	{
 		buffer = std::shared_ptr<GLuint>(new GLuint{0}, detail::delete_buffer);
 		glGenBuffers(1, &(*buffer));
@@ -96,7 +99,7 @@ public:
 			assert(i < capacity && (mode == GL_READ_ONLY || mode == GL_READ_WRITE));
 		}
 		using T = typename detail::TypeAt<I, Args...>::type;
-		size_t offset = Offset<I>::offset();
+		size_t offset = offsets[I];
 		T *t = reinterpret_cast<T*>(data + offset + (i - map_start) * stride_);
 		return *t;
 	}
@@ -130,12 +133,16 @@ public:
 	size_t stride() const {
 		return stride_;
 	}
+	size_t offset(size_t i) const {
+		assert(i < sizeof...(Args));
+		return offsets[i];
+	}
 
 private:
 	template<size_t I>
 	typename detail::TypeAt<I, Args...>::type& get(size_t i){
 		using T = typename detail::TypeAt<I, Args...>::type;
-		size_t offset = Offset<I>::offset();
+		size_t offset = offsets[I];
 		T *t = reinterpret_cast<T*>(data + offset + (i - map_start) * stride_);
 		return *t;
 	}

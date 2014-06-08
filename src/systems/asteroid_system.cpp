@@ -2,13 +2,15 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <entityx/entityx.h>
+#include "util.h"
 #include "renderbatch.h"
 #include "components/position.h"
 #include "components/velocity.h"
 #include "components/appearance.h"
 #include "systems/asteroid_system.h"
 
-AsteroidSystem::AsteroidSystem(size_t n) : render_batch(n, Model{"../res/polyhedron.obj"}){
+AsteroidSystem::AsteroidSystem(size_t n)
+	: render_batch(n, Model{util::get_resource_path() + "suzanne.obj"}){
 	//Everything's just gonna use the same program
 	render_batch.set_attrib_index(3);
 }
