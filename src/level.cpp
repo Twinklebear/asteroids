@@ -43,12 +43,14 @@ void Level::configure(){
 	system_manager->add<AsteroidSystem>(10);
 	system_manager->add<InputSystem>();
 	system_manager->add<entityx::deps::Dependency<Asteroid, Position, Velocity>>();
-	shader_program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
-		std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
+
+	std::string res_path = util::get_resource_path();
+	shader_program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, res_path + "vertex.glsl"),
+		std::make_tuple(GL_FRAGMENT_SHADER, res_path + "fragment.glsl")});
 	viewing = InterleavedBuffer<Layout::PACKED, glm::mat4>{2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	assert(shader_program != -1);
 	event_manager->subscribe<InputEvent>(*this);
-	file_watcher.watch("../res", lfw::Notify::FILE_MODIFIED,
+	file_watcher.watch(res_path, lfw::Notify::FILE_MODIFIED,
 		[this](const lfw::EventData &e){
 			if (e.fname == "vertex.glsl" || e.fname == "fragment.glsl"){
 				this->load_shader();
@@ -89,8 +91,9 @@ void Level::update(double dt){
 	system_manager->update<AsteroidSystem>(dt);
 }
 void Level::load_shader(){
-	GLint shader = util::load_program({std::make_tuple(GL_VERTEX_SHADER, "../res/vertex.glsl"),
-			std::make_tuple(GL_FRAGMENT_SHADER, "../res/fragment.glsl")});
+	std::string res_path = util::get_resource_path();
+	GLint shader = util::load_program({std::make_tuple(GL_VERTEX_SHADER, res_path + "vertex.glsl"),
+		std::make_tuple(GL_FRAGMENT_SHADER, res_path + "fragment.glsl")});
 	if (shader == -1){
 		std::cerr << "Error compiling reloaded shader, cancelling...\n";
 	}

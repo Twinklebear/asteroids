@@ -14,6 +14,10 @@ namespace util {
 		return deg * 0.01745f;
 	}
 	/*
+	 * Get the resource path for resources located in res/sub_dir
+	 */
+	std::string get_resource_path(const std::string &sub_dir = "");
+	/*
 	* Read the entire contents of a file into a string, if an error occurs
 	* the string will be empty
 	*/

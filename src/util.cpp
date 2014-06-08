@@ -11,6 +11,33 @@
 #include "gl_core_3_3.h"
 #include "util.h"
 
+std::string util::get_resource_path(const std::string &sub_dir){
+#ifdef _WIN32
+	const char PATH_SEP = '\\';
+#else
+	const char PATH_SEP = '/';
+#endif
+	static std::string base_res;
+	if (base_res.empty()){
+		char *base_path = SDL_GetBasePath();
+		if (base_path){
+			base_res = base_path;
+			SDL_free(base_path);
+		}
+		else {
+			std::cerr << "Error getting resource path: " << SDL_GetError() << std::endl;
+			return "";
+		}
+		//The final part of the string should be bin/ so replace it with res/ to
+		//get what the lessons use for the resource path
+		size_t pos = base_res.find_last_of("bin") - 2;
+		base_res = base_res.substr(0, pos) + "res" + PATH_SEP;
+	}
+	if (sub_dir.empty()){
+		return base_res;
+	}
+	return base_res + sub_dir + PATH_SEP;
+}
 std::string util::read_file(const std::string &fName){
 	std::ifstream file(fName);
 	if (!file.is_open()){
