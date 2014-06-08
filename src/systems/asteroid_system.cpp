@@ -10,7 +10,7 @@
 #include "systems/asteroid_system.h"
 
 AsteroidSystem::AsteroidSystem(size_t n)
-	: render_batch(n, Model{util::get_resource_path() + "polyhedron.obj"}){
+	: render_batch(n, Model{util::get_resource_path() + "suzanne.obj"}){
 	//Everything's just gonna use the same program
 	render_batch.set_attrib_index(3);
 }

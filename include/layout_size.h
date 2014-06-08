@@ -17,34 +17,31 @@ namespace detail {
 template<Layout L, typename T, typename... Args>
 struct Size {
 	static size_t size(size_t prev = 0){
-		prev += Padding<L, T>::pad(prev) + sizeof(T);
-		return Size<L, Args...>::size(prev);
+		size_t sz = Padding<L, T>::pad(prev) + sizeof(T);
+		return sz + Size<L, Args...>::size(prev + sz);
 	}
 };
 template<Layout L, typename T>
 struct Size<L, T> {
 	static size_t size(size_t prev = 0){
-		prev += Padding<L, T>::pad(prev) + sizeof(T);
-		return prev;
+		return Padding<L, T>::pad(prev) + sizeof(T);
 	}
 };
 template<typename T, size_t N, typename... Args>
 struct Size<Layout::STD140, STD140Array<T, N>, Args...> {
 	static size_t size(size_t prev = 0){
-		//TODO: Couldn't we use our padded here too?
 		//Rule 4 for arrays
-		prev += Padding<Layout::STD140, STD140Array<T, N>>::pad(prev)
+		size_t sz = Padding<Layout::STD140, STD140Array<T, N>>::pad(prev)
 			+ N * STD140Array<T, N>::stride();
-		return Size<Layout::STD140, Args...>::size(prev);
+		return sz +  Size<Layout::STD140, Args...>::size(prev + sz);
 	}
 };
 template<typename T, size_t N>
 struct Size<Layout::STD140, STD140Array<T, N>> {
 	static size_t size(size_t prev = 0){
 		//Rule 4 for arrays
-		prev += Padding<Layout::STD140, STD140Array<T, N>>::pad(prev)
+		return Padding<Layout::STD140, STD140Array<T, N>>::pad(prev)
 			+ N * STD140Array<T, N>::stride();
-		return prev;
 	}
 };
 }

@@ -315,16 +315,17 @@ bool util::load_obj(const std::string &fname,
 			}
 		}
 	}
-	n_elems = indices.size();
-	vbo = InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>(n_elems, GL_ARRAY_BUFFER, GL_STATIC_DRAW);
+	vbo = InterleavedBuffer<Layout::PACKED, glm::vec3, glm::vec3, glm::vec3>(vert_data.size() / 3,
+		GL_ARRAY_BUFFER, GL_STATIC_DRAW);
 	vbo.map(GL_WRITE_ONLY);
-	for (size_t i = 0; i < n_elems; ++i){
+	for (size_t i = 0; i < vert_data.size() / 3; ++i){
 		vbo.write<0>(i) = vert_data[3 * i];
 		vbo.write<1>(i) = vert_data[3 * i + 1];
 		vbo.write<2>(i) = vert_data[3 * i + 2];
 	}
 	vbo.unmap();
-	ebo = InterleavedBuffer<Layout::PACKED, GLushort>(n_elems, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
+	n_elems = indices.size();
+	ebo = InterleavedBuffer<Layout::PACKED, GLushort>(indices.size(), GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW);
 	ebo.map(GL_WRITE_ONLY);
 	for (size_t i = 0; i < indices.size(); ++i){
 		ebo.write<0>(i) = indices[i];
