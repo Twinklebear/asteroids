@@ -70,7 +70,8 @@ void Level::initialize(){
 		}
 		else {
 			e.assign<Position>(glm::vec2{pos(gen), pos(gen)});
-			e.assign<Velocity>(0.25f * glm::vec2{std::cos(dir(gen)), std::sin(dir(gen))});
+			float angle = dir(gen);
+			e.assign<Velocity>(0.25f * glm::vec2{std::cos(angle), std::sin(angle)});
 		}
 		e.assign<Asteroid>();
 	}
