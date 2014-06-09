@@ -15,6 +15,7 @@ class RenderBatch {
 	Model model;
 	GLuint vao_test;
 	InterleavedBuffer<Layout::PACKED, glm::mat4> matrices;
+	unsigned attrib_idx;
 
 public:
 	/*

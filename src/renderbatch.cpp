@@ -8,7 +8,7 @@
 #include "model.h"
 
 RenderBatch::RenderBatch(size_t capacity, Model model) : size(0),
-	model(model), matrices(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW)
+	model(model), matrices(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW), attrib_idx(16)
 {}
 void RenderBatch::push_back(const std::vector<glm::mat4> &objs){
 	if (size + objs.size() > matrices.size()){
@@ -73,6 +73,7 @@ void RenderBatch::remove(size_t i){
 	--size;
 }
 void RenderBatch::set_attrib_index(unsigned attrib){
+	attrib_idx = attrib;
 	model.bind();
 	matrices.bind();
 	for (unsigned i = 0; i < 4; ++i){
@@ -98,5 +99,9 @@ void RenderBatch::resize_buffer(size_t n){
 	glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
 			size * detail::Size<Layout::PACKED, glm::mat4>::size());
 	matrices = new_mat;
+	//If the attribute index has been set update the vao with the new buffer
+	if (attrib_idx != 16){
+		set_attrib_index(attrib_idx);
+	}
 }
 
