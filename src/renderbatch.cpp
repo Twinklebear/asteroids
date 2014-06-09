@@ -8,7 +8,7 @@
 #include "model.h"
 
 RenderBatch::RenderBatch(size_t capacity, Model model) : size(0),
-	model(model), matrices(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW), attrib_idx(16)
+	model(model), matrices(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW), attrib_idx(-1)
 {}
 void RenderBatch::push_back(const std::vector<glm::mat4> &objs){
 	if (size + objs.size() > matrices.size()){
@@ -100,7 +100,7 @@ void RenderBatch::resize_buffer(size_t n){
 			size * detail::Size<Layout::PACKED, glm::mat4>::size());
 	matrices = new_mat;
 	//If the attribute index has been set update the vao with the new buffer
-	if (attrib_idx != 16){
+	if (attrib_idx > -1){
 		set_attrib_index(attrib_idx);
 	}
 }
