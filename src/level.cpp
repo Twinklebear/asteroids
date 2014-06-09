@@ -1,4 +1,5 @@
 #include <random>
+#include <cmath>
 #include <tuple>
 #include <ctime>
 #include <SDL.h>
@@ -58,18 +59,18 @@ void Level::configure(){
 		});
 }
 void Level::initialize(){
-	std::mt19937 mt_rand;
-	mt_rand.seed(std::time(0));
-	for (int i = 0; i < 10; ++i){
+	std::random_device rd;
+	std::mt19937 gen{rd()};
+	std::uniform_real_distribution<float> dir{0, 2 * 3.14};
+	std::uniform_real_distribution<float> pos{-5, 5};
+	for (int i = 0; i < 30; ++i){
 		entityx::Entity e = entity_manager->create();
 		if (i == 0){
 			e.assign<Controllable>();
 		}
 		else {
-			e.assign<Position>(glm::vec2{static_cast<float>(mt_rand() % 8) - 4,
-				static_cast<float>(mt_rand() % 8) - 4});
-			e.assign<Velocity>(0.25f * glm::vec2{static_cast<float>(mt_rand() % 4) - 2,
-				static_cast<float>(mt_rand() % 4) - 2});
+			e.assign<Position>(glm::vec2{pos(gen), pos(gen)});
+			e.assign<Velocity>(0.25f * glm::vec2{std::cos(dir(gen)), std::sin(dir(gen))});
 		}
 		e.assign<Asteroid>();
 	}
