@@ -57,6 +57,15 @@ GLenum gl_attrib_type<glm::mat4>(){
 	return gl_attrib_type<glm::mat4::value_type>();
 }
 
+template<int...>
+struct seq{};
+template<int N, int... S>
+struct gens : gens<N - 1, N - 1, S...>{};
+template<int... S>
+struct gens<0, S...>{
+	typedef seq<S...> type;
+};
+
 template<Layout L, typename... Args>
 struct Test {
 	std::array<size_t, sizeof...(Args)> offsets;
@@ -65,6 +74,18 @@ struct Test {
 	{}
 	void set_indices(const std::array<int, sizeof...(Args)> &indices){
 		set_attrib_index<Args...>(indices);
+	}
+	template<int N, int... S>
+	void write_index(const seq<N, S...> &){
+		std::cout << "member idx " << N << std::endl;
+		write_index(seq<S...>{});
+	}
+	template<int N>
+	void write_index(const seq<N> &){
+		std::cout << "last idx " << N << std::endl;
+	}
+	void write_tuple(const std::tuple<Args...> &args){
+		write_index(typename gens<sizeof...(Args)>::type{});
 	}
 
 private:
@@ -83,7 +104,7 @@ private:
 		num_indices = sizeof(T) % (4 * sizeof(GLfloat)) == 0 ? num_indices : num_indices + 1;
 
 		std::cout << "Need to set " << num_indices << " attrib indices\n";
-		for (int j = 0; j  < num_indices; ++j){
+		for (int j = 0; j < num_indices; ++j){
 			if (gl_type == GL_FLOAT){
 				std::cout << "glVertexAttribPointer:\n"
 					<< "  index: " << j + index
@@ -99,10 +120,6 @@ private:
 					<< "\n";
 			}
 			std::cout << "glVertexAttribDivisor(" << j + index << ")\n";
-			if (j + index >= 16){
-				std::cerr << "Attribute has spilled over out of the minimum"
-					<< " value for GL_MAX_VERTEX_ATTRIBS (16)\n";
-			}
 		}
 		std::cout << "--------\n";
 	}
@@ -121,7 +138,7 @@ private:
 		num_indices = sizeof(A) % (4 * sizeof(GLfloat)) == 0 ? num_indices : num_indices + 1;
 
 		std::cout << "Need to set " << num_indices << " attrib indices\n";
-		for (int j = 0; j  < num_indices; ++j){
+		for (int j = 0; j < num_indices; ++j){
 			if (gl_type == GL_FLOAT){
 				std::cout << "glVertexAttribPointer:\n"
 					<< "  index: " << j + index
@@ -195,19 +212,22 @@ void run(SDL_Window *win){
 	Level level;
 	level.start();
 	while (!level.should_quit()){
+		//TODO Fake time for now
 		level.step(0.1);
 		GLenum err = glGetError();
 		if (err != GL_NO_ERROR){
 			std::cerr << "OpenGL Error: " << std::hex << err << std::dec << "\n";
 		}
 		SDL_GL_SwapWindow(win);
+		//TODO VSync? proper time delays etc?
 		SDL_Delay(16);
 	}
 }
 
 void test_index_work(){
 	Test<Layout::STD140, glm::vec3, glm::vec2, glm::vec3, glm::mat4> t;
-	//t.set_indices({0, 1, 2});
+	t.write_tuple(std::make_tuple(glm::vec3{}, glm::vec2{}, glm::vec3{}, glm::mat4{}));
+	t.set_indices({0, 1, 2, 3});
 }
 
 using Offset = detail::Offset<Layout::STD140, glm::mat4, float,

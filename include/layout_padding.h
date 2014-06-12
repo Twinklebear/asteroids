@@ -17,7 +17,7 @@ struct Padding;
  */
 template<typename T>
 struct Padding<Layout::PACKED, T> {
-	static constexpr size_t pad(size_t prev = 0){
+	static constexpr size_t pad(size_t){
 		return 0;
 	}
 };
