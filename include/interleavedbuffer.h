@@ -235,6 +235,7 @@ private:
 	template<int N, int... S>
 	void write(size_t i, const std::tuple<Args...> &args, detail::Sequence<N, S...>){
 		get<N>(i) = std::get<N>(args);
+		write(i, args, detail::Sequence<S...>{});
 	}
 	template<int N>
 	void write(size_t i, const std::tuple<Args...> &args, detail::Sequence<N>){
