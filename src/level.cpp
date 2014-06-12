@@ -59,8 +59,7 @@ void Level::configure(){
 		});
 }
 void Level::initialize(){
-	std::random_device rd;
-	std::mt19937 gen{rd()};
+	std::mt19937 gen{std::time(0)};
 	std::uniform_real_distribution<float> dir{0, 2 * 3.14};
 	std::uniform_real_distribution<float> pos{-5, 5};
 	for (int i = 0; i < 30; ++i){
