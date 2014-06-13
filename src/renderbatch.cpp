@@ -3,6 +3,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "gl_core_3_3.h"
+#include "glattrib_type.h"
 #include "interleavedbuffer.h"
 #include "renderbatch.h"
 #include "model.h"
@@ -76,10 +77,30 @@ void RenderBatch::set_attrib_index(unsigned attrib){
 	attrib_idx = attrib;
 	model.bind();
 	matrices.bind();
-	for (unsigned i = 0; i < 4; ++i){
+	//We know this will be 0 but it's more of a basic implementation of moving
+	//to the automated setting
+	size_t base_offset = matrices.offset(0);
+	GLenum gl_type = detail::gl_attrib_type<glm::mat4>();
+	//number of occupied indices is rounded based on vec4
+	//would we want to use the Sizer for this?
+	size_t attrib_size = detail::Size<Layout::PACKED, glm::mat4>::size();
+	size_t num_indices = attrib_size / sizeof(glm::vec4);
+	num_indices = attrib_size % sizeof(glm::vec4) == 0 ? num_indices : num_indices + 1;
+	for (size_t i = 0; i < num_indices; ++i){
 		glEnableVertexAttribArray(i + attrib);
-		glVertexAttribPointer(i + attrib, 4, GL_FLOAT, GL_FALSE, matrices.stride(),
-			(void*)(sizeof(glm::vec4) * i));
+		std::cout << "glVertexAttribPointer:\n"
+			<< "  index: " << i + attrib
+			<< "\n  raw offset: " << base_offset
+			<< "\n  additional offset: " << i * sizeof(glm::vec4)
+			<< "\n";
+		if (gl_type == GL_FLOAT){
+			glVertexAttribPointer(i + attrib, 4, GL_FLOAT, GL_FALSE, matrices.stride(),
+				(void*)(sizeof(glm::vec4) * i));
+		}
+		else {
+			glVertexAttribIPointer(i + attrib, 4, GL_FLOAT, matrices.stride(),
+				(void*)(sizeof(glm::vec4) * i));
+		}
 		glVertexAttribDivisor(i + attrib, 1);
 	}
 }

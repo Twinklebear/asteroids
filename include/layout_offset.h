@@ -16,10 +16,7 @@ struct Offset {
 	static void fill_offsets(std::array<size_t, N> &arr, size_t prev){
 		size_t pad = Padding<L, T>::pad(prev);
 		arr[N - sizeof...(Args) - 1] = prev + pad;
-		std::cout << "Set offset for " << N - sizeof...(Args) - 1
-			<< " to " << prev + pad << "\n";
 		prev += Size<L, T>::size(prev + pad);
-		std::cout << "occupies until: " << prev << "\n";
 		Offset<L, Args...>::fill_offsets(arr, prev);
 	}
 };
@@ -34,10 +31,7 @@ struct Offset<L, T> {
 	static void fill_offsets(std::array<size_t, N> &arr, size_t prev){
 		size_t pad = Padding<L, T>::pad(prev);
 		arr[N - 1] = prev + pad;
-		std::cout << "Set offset for " << N - 1
-			<< " to " << prev + pad << "\n";
 		prev += Size<L, T>::size(prev + pad);
-		std::cout << "occupies until " << prev << "\n";
 	}
 };
 }
