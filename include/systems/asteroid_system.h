@@ -6,7 +6,7 @@
 #include "model.h"
 
 class AsteroidSystem : public entityx::System<AsteroidSystem> {
-	RenderBatch render_batch;
+	RenderBatch<glm::mat4, int> render_batch;
 
 public:
 	AsteroidSystem(size_t n);

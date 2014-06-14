@@ -1,4 +1,4 @@
-add_executable(Asteroids main.cpp renderbatch.cpp util.cpp model.cpp
+add_executable(Asteroids main.cpp util.cpp model.cpp
 	components/controllable.cpp systems/movement_system.cpp
 	systems/asteroid_system.cpp systems/input_system.cpp
 	level.cpp deleters.cpp gl_core_3_3.c)
