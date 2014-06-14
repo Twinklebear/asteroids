@@ -68,7 +68,7 @@ void RenderBatch::remove(size_t i){
 	assert(i < size);
 	matrices.map(GL_WRITE_ONLY);
 	for (size_t j = i; j < size - 1; ++j){
-		matrices.write<0>(j) = matrices.write<0>(j + 1);
+		matrices.write(j, matrices.read(j + 1));
 	}
 	matrices.unmap();
 	--size;
@@ -93,12 +93,12 @@ void RenderBatch::set_attrib_index(unsigned attrib){
 			<< "\n  raw offset: " << base_offset
 			<< "\n  additional offset: " << i * sizeof(glm::vec4)
 			<< "\n";
-		if (gl_type == GL_FLOAT){
-			glVertexAttribPointer(i + attrib, 4, GL_FLOAT, GL_FALSE, matrices.stride(),
+		if (gl_type == GL_FLOAT || gl_type == GL_HALF_FLOAT || gl_type == GL_DOUBLE){
+			glVertexAttribPointer(i + attrib, 4, gl_type, GL_FALSE, matrices.stride(),
 				(void*)(sizeof(glm::vec4) * i));
 		}
 		else {
-			glVertexAttribIPointer(i + attrib, 4, GL_FLOAT, matrices.stride(),
+			glVertexAttribIPointer(i + attrib, 4, gl_type, matrices.stride(),
 				(void*)(sizeof(glm::vec4) * i));
 		}
 		glVertexAttribDivisor(i + attrib, 1);

@@ -152,10 +152,7 @@ public:
 		else {
 			assert(i < capacity && (mode == GL_READ_ONLY || mode == GL_READ_WRITE));
 		}
-		using T = typename detail::TypeAt<I, Args...>::type;
-		size_t offset = offsets[I];
-		T *t = reinterpret_cast<T*>(data + offset + (i - map_start) * stride_);
-		return *t;
+		return get<I>(i);
 	}
 	/*
 	 * Get a write-only reference to block member I at index i in the array
@@ -190,6 +187,15 @@ public:
 			assert(i < capacity && mode == GL_READ_WRITE);
 		}
 		return get<I>(i);
+	}
+	/*
+	 * Read a block of values from the buffer at index i
+	 * TODO: Is there a way to convert all the args to const& instead of copying
+	 */
+	std::tuple<Args...> read(size_t i) const {
+		std::tuple<Args...> t;
+		read(i, t, typename detail::GenSequence<sizeof...(Args)>::seq{});
+		return t;
 	}
 	/*
 	 * Write a block of values to the buffer at index i
@@ -228,6 +234,13 @@ private:
 		T *t = reinterpret_cast<T*>(data + offset + (i - map_start) * stride_);
 		return *t;
 	}
+	template<size_t I>
+	const typename detail::TypeAt<I, Args...>::type& get(size_t i) const {
+		using T = typename detail::TypeAt<I, Args...>::type;
+		size_t offset = offsets[I];
+		T *t = reinterpret_cast<T*>(data + offset + (i - map_start) * stride_);
+		return *t;
+	}
 	/*
 	 * Recursively write tuple values into the block using the sequence to retrieve
 	 * the tuple indices
@@ -240,6 +253,19 @@ private:
 	template<int N>
 	void write(size_t i, const std::tuple<Args...> &args, detail::Sequence<N>){
 		get<N>(i) = std::get<N>(args);
+	}
+	/*
+	 * Recursively read values from the block into the tuple using the sequence to
+	 * retrieve the indices
+	 */
+	template<int N, int... S>
+	void read(size_t i, std::tuple<Args...> &t, detail::Sequence<N, S...>) const {
+		std::get<N>(t) = get<N>(i);
+		read(i, t, detail::Sequence<S...>{});
+	}
+	template<int N>
+	void read(size_t i, std::tuple<Args...> &t, detail::Sequence<N>) const {
+		std::get<N>(t) = get<N>(i);
 	}
 };
 
