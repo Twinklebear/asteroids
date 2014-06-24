@@ -141,7 +141,6 @@ public:
 	 * Get a read-only reference to block member I at index i in the array
 	 * The buffer must be at least mapped for reading with i in the
 	 * mapped range
-	 * TODO: Indexed block read/write/at is broken?
 	 */
 	template<size_t I>
 	const typename detail::TypeAt<I, Args...>::type& read(size_t i) const {
@@ -239,7 +238,7 @@ private:
 	const typename detail::TypeAt<I, Args...>::type& get(size_t i) const {
 		using T = typename detail::TypeAt<I, Args...>::type;
 		size_t offset = offsets[I];
-		T *t = reinterpret_cast<T*>(data + offset + (i - map_start) * stride_);
+		const T *t = reinterpret_cast<const T*>(data + offset + (i - map_start) * stride_);
 		return *t;
 	}
 	/*
