@@ -8,20 +8,30 @@
 template<typename T, size_t N>
 class STD140Array {
 	static_assert(!std::is_array<T>::value, "Multidimensional arrays not supported");
-	//std::array vs. std::vector? These arrays could be pretty big if they've got lots of
-	//matrices or something. Although how many will I really be sending?
-	std::vector<char> data;
 
 public:
-	STD140Array() : data(N * stride()) {}
+	/*
+	 * Compute the array stride for the std140 layout requirements
+	 * which requires that elements are aligned to vec4 (16 byte) alignment
+	 */
+	static constexpr size_t stride(){
+		return sizeof(T) % 16 == 0 ? sizeof(T) : sizeof(T) + 16 - sizeof(T) % 16;
+	}
+
+private:
+	//std::array vs. std::vector? These arrays could be pretty big if they've got lots of
+	//matrices or something. Although how many will I really be sending?
+	char data[N * stride()];
+
+public:
 	T& operator[](size_t i){
 		assert(i < N);
-		T *t = reinterpret_cast<T*>(&data[0] + stride() * i);
+		T *t = reinterpret_cast<T*>(data + stride() * i);
 		return *t;
 	}
 	const T& operator[](size_t i) const {
 		assert(i < N);
-		T *t = reinterpret_cast<T*>(&data[0] + stride() * i);
+		const T *t = reinterpret_cast<const T*>(data + stride() * i);
 		return *t;
 	}
 	T read(size_t i){
@@ -39,13 +49,6 @@ public:
 	static constexpr size_t size(){
 		return N;
 	}
-	/*
-	 * Compute the array stride for the std140 layout requirements
-	 * which requires that elements are aligned to vec4 (16 byte) alignment
-	 */
-	static constexpr size_t stride(){
-		return sizeof(T) % 16 == 0 ? sizeof(T) : sizeof(T) + 16 - sizeof(T) % 16;
-	}
 };
 /*
  * The std140 matrices are an bit of a pain since they're passed as arrays
@@ -57,7 +60,6 @@ class STD140Array<glm::mat2, N> {
 	STD140Array<glm::vec2, 2 * N> array;
 
 public:
-	STD140Array() : array() {}
 	glm::mat2 read(size_t i){
 		glm::mat2 m;
 		m[0] = array[2 * i];
@@ -89,7 +91,6 @@ class STD140Array<glm::mat3, N> {
 	STD140Array<glm::vec3, 3 * N> array;
 
 public:
-	STD140Array() : array() {}
 	glm::mat3 read(size_t i){
 		glm::mat3 m;
 		m[0] = array[3 * i];

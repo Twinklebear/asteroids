@@ -18,6 +18,7 @@ void run(SDL_Window *win);
 //This is just for testing that the alignments/offsets I compute match STD140 in GLSL
 std::string gltype_tostring(GLint type);
 void print_glsl_blocks();
+void test_buffer();
 
 int main(int argc, char **argv){
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
@@ -56,7 +57,8 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
-	run(win);
+	test_buffer();
+	//run(win);
 
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);
@@ -76,6 +78,25 @@ void run(SDL_Window *win){
 		SDL_GL_SwapWindow(win);
 		//TODO VSync? proper time delays etc?
 		SDL_Delay(16);
+	}
+}
+
+void test_buffer(){
+	InterleavedBuffer<Layout::STD140, float, STD140Array<float, 10>> buf{1, GL_ARRAY_BUFFER, GL_STATIC_DRAW};
+	
+	buf.map(GL_READ_WRITE);
+	auto w_block = buf.at(0);
+	*std::get<0>(w_block) = 0.5f;
+	STD140Array<float, 10> &arr = *std::get<1>(w_block);
+	for (size_t i = 0; i < arr.size(); ++i){
+		arr[i] = i;
+	}
+	buf.unmap();
+	buf.map(GL_READ_ONLY);
+	std::cout << "buf.read<0>(0) = " << buf.read<0>(0) << std::endl;
+	const STD140Array<float, 10> &carr = buf.read<1>(0);
+	for (size_t i = 0; i < arr.size(); ++i){
+		std::cout << "carr[" << i << "] = " << carr[i] << std::endl;
 	}
 }
 
