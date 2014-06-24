@@ -9,6 +9,7 @@
 #include "deleters.h"
 #include "sequence.h"
 #include "type_at.h"
+#include "ptr_tuple.h"
 #include "layout_size.h"
 #include "layout_offset.h"
 
@@ -38,6 +39,8 @@ class InterleavedBuffer {
 	using Offset = detail::Offset<L, Args...>;
 
 public:
+	//tuple of pointers type returned by the tuple read function
+	using PtrTuple = typename detail::PtrTuple<Args...>::type;
 	/*
 	 * Create a non-existant buffer, just provides an empty ctor to call
 	 * so that you can defer buffer creation until initializing OpenGL
@@ -190,17 +193,32 @@ public:
 	}
 	/*
 	 * Read a block of values from the buffer at index i
-	 * TODO: Is there a way to convert all the args to const& instead of copying
 	 */
-	std::tuple<Args...> read(size_t i) const {
-		std::tuple<Args...> t;
-		read(i, t, typename detail::GenSequence<sizeof...(Args)>::seq{});
+	PtrTuple at(size_t i){
+		assert(data != nullptr);
+		//Check appopriate assert for our map state
+		if (map_end > 0){
+			assert(i >= map_start && i < map_end && (mode & (GL_MAP_WRITE_BIT | GL_MAP_READ_BIT)));
+		}
+		else {
+			assert(i < capacity && mode == GL_READ_WRITE);
+		}
+		PtrTuple t;
+		at(i, t, typename detail::GenSequence<sizeof...(Args)>::seq{});
 		return t;
 	}
 	/*
 	 * Write a block of values to the buffer at index i
 	 */
 	void write(size_t i, const std::tuple<Args...> &args){
+		assert(data != nullptr);
+		//Check appopriate assert for our map state
+		if (map_end > 0){
+			assert(i >= map_start && i < map_end && (mode & GL_MAP_WRITE_BIT));
+		}
+		else {
+			assert(i < capacity && (mode == GL_WRITE_ONLY || mode == GL_READ_WRITE));
+		}
 		write(i, args, typename detail::GenSequence<sizeof...(Args)>::seq{});
 	}
 	/*
@@ -259,13 +277,13 @@ private:
 	 * retrieve the indices
 	 */
 	template<int N, int... S>
-	void read(size_t i, std::tuple<Args...> &t, detail::Sequence<N, S...>) const {
-		std::get<N>(t) = get<N>(i);
-		read(i, t, detail::Sequence<S...>{});
+	void at(size_t i, PtrTuple &t, detail::Sequence<N, S...>){
+		std::get<N>(t) = &get<N>(i);
+		at(i, t, detail::Sequence<S...>{});
 	}
 	template<int N>
-	void read(size_t i, std::tuple<Args...> &t, detail::Sequence<N>) const {
-		std::get<N>(t) = get<N>(i);
+	void at(size_t i, PtrTuple &t, detail::Sequence<N>){
+		std::get<N>(t) = &get<N>(i);
 	}
 };
 
