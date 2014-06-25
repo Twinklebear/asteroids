@@ -57,8 +57,8 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
-	test_buffer();
-	//run(win);
+	//test_buffer();
+	run(win);
 
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);
@@ -66,15 +66,22 @@ int main(int argc, char **argv){
 	return 0;
 }
 void run(SDL_Window *win){
+	RenderBatch<glm::mat4, int> letters{2, Model{util::get_resource_path() + "quad.obj"}};
+	letters.set_attrib_indices(std::array<int, 2>{3, 7});
+	letters.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, 1}), 1));
+	letters.push_back(std::make_tuple(glm::translate(glm::vec3{3, 0, 1}), 2));
+
 	Level level;
 	level.start();
 	while (!level.should_quit()){
 		//TODO Fake time for now
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		level.step(0.1);
 		GLenum err = glGetError();
 		if (err != GL_NO_ERROR){
 			std::cerr << "OpenGL Error: " << std::hex << err << std::dec << "\n";
 		}
+		letters.render();
 		SDL_GL_SwapWindow(win);
 		//TODO VSync? proper time delays etc?
 		SDL_Delay(16);

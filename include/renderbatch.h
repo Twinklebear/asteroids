@@ -18,8 +18,6 @@ template<typename... Attribs>
 class RenderBatch {
 	size_t size;
 	Model model;
-	//TODO: how to handle copy ctor assign-op?
-	GLuint vao_test;
 	InterleavedBuffer<Layout::PACKED, Attribs...> attributes;
 	std::array<int, sizeof...(Attribs)> indices;
 
@@ -141,6 +139,8 @@ public:
 		model.bind();
 		attributes.bind();
 		set_attrib_index<Attribs...>();
+		//Something is trampling state after this call on the letters. Perhaps in model loading?
+		glBindVertexArray(0);
 	}
 	/*
 	 * Render the batch
@@ -157,13 +157,7 @@ private:
 	//Resize the instance data buffer capacity to some new size
 	void resize_buffer(size_t n){
 		std::cerr << "Performance warning: RenderBatch attribute buffer resizing, consider making it bigger\n";
-		InterleavedBuffer<Layout::PACKED, Attribs...> new_buf(n, GL_ARRAY_BUFFER,
-			GL_STREAM_DRAW);
-		new_buf.bind(GL_COPY_WRITE_BUFFER);
-		attributes.bind(GL_COPY_READ_BUFFER);
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
-			size * detail::Size<Layout::PACKED, Attribs...>::size());
-		attributes = new_buf;
+		attributes.reserve(n);
 		//If the attribute index has been set update the vao with the new buffer
 		if (indices[0] > -1){
 			set_attrib_indices(indices);
