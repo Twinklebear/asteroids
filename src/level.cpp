@@ -20,7 +20,7 @@
 #include "components/controllable.h"
 #include "level.h"
 
-Level::Level() : shader_program(0), viewing(), quit(false) {}
+Level::Level() : shader_program(0), viewing(2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW), quit(false) {}
 Level::~Level(){
 	glDeleteProgram(shader_program);
 }
@@ -48,7 +48,6 @@ void Level::configure(){
 	std::string res_path = util::get_resource_path();
 	shader_program = util::load_program({std::make_tuple(GL_VERTEX_SHADER, res_path + "vertex.glsl"),
 		std::make_tuple(GL_FRAGMENT_SHADER, res_path + "fragment.glsl")});
-	viewing = InterleavedBuffer<Layout::PACKED, glm::mat4>{2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	assert(shader_program != -1);
 	event_manager->subscribe<InputEvent>(*this);
 	file_watcher.watch(res_path, lfw::Notify::FILE_MODIFIED,

@@ -42,14 +42,6 @@ public:
 	//tuple of pointers type returned by the tuple read function
 	using PtrTuple = typename detail::PtrTuple<Args...>::type;
 	/*
-	 * Create a non-existant buffer, just provides an empty ctor to call
-	 * so that you can defer buffer creation until initializing OpenGL
-	 */
-	InterleavedBuffer() : capacity(0), stride_(0), buffer(nullptr),
-		mode(0), type(0), access(0), data(nullptr), map_start(0), map_end(0),
-		offsets(Offset::offsets())
-	{}
-	/*
 	 * Create an interleaved buffer with capable of storing capacity blocks of
 	 * Args. The buffer will be of the type passed and use the desired access flag
 	 */
@@ -61,7 +53,9 @@ public:
 		buffer = std::shared_ptr<GLuint>(new GLuint{0}, detail::delete_buffer);
 		glGenBuffers(1, &(*buffer));
 		glBindBuffer(type, *buffer);
-		glBufferData(type, capacity * stride_, NULL, access);
+		if (capacity > 0){
+			glBufferData(type, capacity * stride_, NULL, access);
+		}
 	}
 	~InterleavedBuffer(){
 		//If they forgot to unmap the buffer
@@ -220,6 +214,25 @@ public:
 			assert(i < capacity && (mode == GL_WRITE_ONLY || mode == GL_READ_WRITE));
 		}
 		write(i, args, typename detail::GenSequence<sizeof...(Args)>::seq{});
+	}
+	/*
+	 * Reserve some capacity for the buffer
+	 */
+	void reserve(size_t new_cap){
+		if (new_cap > capacity){
+			GLuint new_buf;
+			glGenBuffers(1, &new_buf);
+			glBindBuffer(type, new_buf);
+			glBufferData(type, new_cap * stride_, NULL, access);
+			glBindBuffer(GL_COPY_WRITE_BUFFER, new_buf);
+			glBindBuffer(GL_COPY_READ_BUFFER, *buffer);
+			if (capacity > 0){
+				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
+					capacity * stride_);
+			}
+			buffer = std::shared_ptr<GLuint>(new GLuint{new_buf}, detail::delete_buffer);
+			capacity = new_cap;
+		}
 	}
 	/*
 	 * Get the number of blocks stored in the buffer

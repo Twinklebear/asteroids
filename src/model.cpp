@@ -8,7 +8,10 @@
 #include "interleavedbuffer.h"
 #include "model.h"
 
-Model::Model(const std::string &file) : vao(nullptr), vbo(), ebo(), n_elems(0){
+Model::Model(const std::string &file) : vao(nullptr),
+	vbo(0, GL_ARRAY_BUFFER, GL_STATIC_DRAW), ebo(0, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),
+	n_elems(0)
+{
 	load(file);
 }
 void Model::bind(){
