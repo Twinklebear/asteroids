@@ -41,7 +41,7 @@ bool Level::should_quit(){
 }
 void Level::configure(){
 	system_manager->add<MovementSystem>();
-	system_manager->add<AsteroidSystem>(10);
+	system_manager->add<AsteroidSystem>(1);
 	system_manager->add<InputSystem>();
 	system_manager->add<entityx::deps::Dependency<Asteroid, Position, Velocity>>();
 
@@ -61,7 +61,7 @@ void Level::initialize(){
 	std::mt19937 gen{std::time(0)};
 	std::uniform_real_distribution<float> dir{0, 2 * 3.14};
 	std::uniform_real_distribution<float> pos{-5, 5};
-	for (int i = 0; i < 30; ++i){
+	for (int i = 0; i < 1; ++i){
 		entityx::Entity e = entity_manager->create();
 		if (i == 0){
 			e.assign<Controllable>();
@@ -87,7 +87,6 @@ void Level::update(double dt){
 	file_watcher.update();
 	system_manager->update<InputSystem>(dt);
 	system_manager->update<MovementSystem>(dt);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	system_manager->update<AsteroidSystem>(dt);
 }
 void Level::load_shader(){

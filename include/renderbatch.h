@@ -18,8 +18,6 @@ template<typename... Attribs>
 class RenderBatch {
 	size_t size;
 	Model model;
-	//TODO: how to handle copy ctor assign-op?
-	GLuint vao_test;
 	InterleavedBuffer<Layout::PACKED, Attribs...> attributes;
 	std::array<int, sizeof...(Attribs)> indices;
 
@@ -141,6 +139,8 @@ public:
 		model.bind();
 		attributes.bind();
 		set_attrib_index<Attribs...>();
+		//Something is trampling state after this call on the letters. Perhaps in model loading?
+		glBindVertexArray(0);
 	}
 	/*
 	 * Render the batch
