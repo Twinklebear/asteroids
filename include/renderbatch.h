@@ -157,13 +157,7 @@ private:
 	//Resize the instance data buffer capacity to some new size
 	void resize_buffer(size_t n){
 		std::cerr << "Performance warning: RenderBatch attribute buffer resizing, consider making it bigger\n";
-		InterleavedBuffer<Layout::PACKED, Attribs...> new_buf(n, GL_ARRAY_BUFFER,
-			GL_STREAM_DRAW);
-		new_buf.bind(GL_COPY_WRITE_BUFFER);
-		attributes.bind(GL_COPY_READ_BUFFER);
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
-			size * detail::Size<Layout::PACKED, Attribs...>::size());
-		attributes = new_buf;
+		attributes.reserve(n);
 		//If the attribute index has been set update the vao with the new buffer
 		if (indices[0] > -1){
 			set_attrib_indices(indices);
