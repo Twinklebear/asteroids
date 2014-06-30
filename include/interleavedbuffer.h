@@ -28,7 +28,7 @@ template<Layout L, typename... Args>
 class InterleavedBuffer {
 	size_t capacity, stride_;
 	std::shared_ptr<GLuint> buffer;
-	GLenum mode, type, access;
+	GLenum mode, type, access, bound_target;
 	char *data;
 	//Used for tracking where a mapped range begins and ends
 	//if a range isn't mapped end is 0
@@ -69,7 +69,8 @@ public:
 	 */
 	void bind(){
 		assert(buffer != nullptr);
-		glBindBuffer(type, *buffer);
+		bound_target = type;
+		glBindBuffer(bound_target, *buffer);
 	}
 	/*
 	 * Bind the buffer to some other type target. This will not change
@@ -77,14 +78,22 @@ public:
 	 */
 	void bind(GLenum target){
 		assert(buffer != nullptr);
-		glBindBuffer(target, *buffer);
+		bound_target = target;
+		glBindBuffer(bound_target, *buffer);
+	}
+	/*
+	 * Reset the binding point the buffer is currently bound to
+	 */
+	void unbind(){
+		glBindBuffer(bound_target, 0);
 	}
 	/*
 	 * Bind the entire buffer to the desired indexed buffer target
 	 */
 	void bind_base(int index){
 		assert(buffer != nullptr);
-		glBindBufferBase(type, index, *buffer);
+		bound_target = type;
+		glBindBufferBase(bound_target, index, *buffer);
 	}
 	/*
 	 * Map the entire buffer for access with the desired mode, m
@@ -95,7 +104,7 @@ public:
 		bind();
 		mode = m;
 		map_start = 0;
-		data = static_cast<char*>(glMapBuffer(type, mode));
+		data = static_cast<char*>(glMapBuffer(bound_target, mode));
 	}
 	/*
 	 * Map a range of indices of the buffer for access with the desired mode, m
@@ -108,7 +117,7 @@ public:
 		mode = flags;
 		map_start = start;
 		map_end = start + length;
-		data = static_cast<char*>(glMapBufferRange(type, map_start * stride_,
+		data = static_cast<char*>(glMapBufferRange(bound_target, map_start * stride_,
 			length * stride_, flags));
 	}
 	/*
