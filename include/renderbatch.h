@@ -105,6 +105,12 @@ public:
 		attributes.unmap();
 	}
 	/*
+	 * Get access to the underlying attribute buffer for the render batch
+	 */
+	InterleavedBuffer<Layout::PACKED, Attribs...>& buffer(){
+		return attributes;
+	}
+	/*
 	 * Resize the batch to some new size
 	 */
 	void resize(size_t n){
