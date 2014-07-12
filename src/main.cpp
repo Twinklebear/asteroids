@@ -15,6 +15,7 @@
 #include "layout_padding.h"
 
 void run(SDL_Window *win);
+void tile_demo(SDL_Window *win);
 //This is just for testing that the alignments/offsets I compute match STD140 in GLSL
 std::string gltype_tostring(GLint type);
 void print_glsl_blocks();
@@ -57,8 +58,7 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
-	//test_buffer();
-	run(win);
+	tile_demo(win);
 
 	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(win);
@@ -87,10 +87,94 @@ void run(SDL_Window *win){
 		SDL_Delay(16);
 	}
 }
+void tile_demo(SDL_Window *win){
+	std::string res_path = util::get_resource_path();
+	GLint shader = util::load_program({std::make_tuple(GL_VERTEX_SHADER, res_path + "vtiles.glsl"),
+		std::make_tuple(GL_FRAGMENT_SHADER, res_path + "ftiles.glsl")});
+	assert(shader != -1);
+	glUseProgram(shader);
+
+	InterleavedBuffer<Layout::STD140, STD140Array<glm::vec2, 16>> tile_uvs{1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
+	tile_uvs.map(GL_WRITE_ONLY);
+	{
+		STD140Array<glm::vec2, 16> &uv_arr = tile_uvs.write<0>(0);
+		uv_arr[0] = glm::vec2{0, 0.5};
+		uv_arr[1] = glm::vec2{0.5, 0.5};
+		uv_arr[2] = glm::vec2{0, 0};
+		uv_arr[3] = glm::vec2{0.5, 0};
+
+		uv_arr[4] = glm::vec2{0.5, 0.5};
+		uv_arr[5] = glm::vec2{1, 0.5};
+		uv_arr[6] = glm::vec2{0.5, 0};
+		uv_arr[7] = glm::vec2{1, 0};
+
+		uv_arr[8] = glm::vec2{0, 1};
+		uv_arr[9] = glm::vec2{0.5, 1};
+		uv_arr[10] = glm::vec2{0, 0.5};
+		uv_arr[11] = glm::vec2{0.5, 0.5};
+
+		uv_arr[12] = glm::vec2{0.5, 1};
+		uv_arr[13] = glm::vec2{1, 1};
+		uv_arr[14] = glm::vec2{0.5, 0.5};
+		uv_arr[15] = glm::vec2{1, 0.5};
+	}
+	tile_uvs.unmap();
+	GLuint tile_uvs_block = glGetUniformBlockIndex(shader, "TileUVs");
+	glUniformBlockBinding(shader, tile_uvs_block, 0);
+	tile_uvs.bind_base(0);
+
+	//Tiles are positioned by a full transformation matrix and the tile type is specified
+	//by an int id
+	RenderBatch<glm::mat4, int> tiles{1, Model{res_path + "quad.obj"}};
+	tiles.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, -0.5}), 0));
+	tiles.set_attrib_indices(std::array<int, 2>{3, 7});
+
+	GLuint texture_atlas = util::load_texture(res_path + "ABCD.bmp");
+
+	bool quit = false;
+	while (!quit){
+		SDL_Event e;
+		while (SDL_PollEvent(&e)){
+			if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)){
+				quit = true;
+			}
+			else if (e.type == SDL_KEYDOWN){
+				int tile_id;
+				switch (e.key.keysym.sym){
+					case SDLK_2:
+						tile_id = 1;
+						break;
+					case SDLK_3:
+						tile_id = 2;
+						break;
+					case SDLK_4:
+						tile_id = 3;
+						break;
+					default:
+						tile_id = 0;
+				}
+				auto buffer = tiles.buffer();
+				buffer.map(GL_WRITE_ONLY);
+				buffer.write<1>(0) = tile_id;
+				buffer.unmap();
+			}
+		}
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		tiles.render();
+
+		GLenum err = glGetError();
+		if (err != GL_NO_ERROR){
+			std::cerr << "OpenGL Error: " << std::hex << err << std::dec << "\n";
+		}
+		SDL_GL_SwapWindow(win);
+		SDL_Delay(16);
+	}
+	glDeleteTextures(1, &texture_atlas);
+}
 
 void test_buffer(){
 	InterleavedBuffer<Layout::STD140, float, STD140Array<float, 10>> buf{1, GL_ARRAY_BUFFER, GL_STATIC_DRAW};
-	
+
 	buf.map(GL_READ_WRITE);
 	auto w_block = buf.at(0);
 	*std::get<0>(w_block) = 0.5f;

@@ -13,7 +13,6 @@ Model::Model(const std::string &file) : vao(new GLuint{0}, detail::delete_vao),
 	n_elems(0)
 {
 	glGenVertexArrays(1, &(*vao));
-	std::cout << "file: " << file << " = vao " << *vao << std::endl;
 	load(file);
 }
 void Model::bind(){

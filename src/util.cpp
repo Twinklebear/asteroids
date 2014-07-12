@@ -56,7 +56,7 @@ GLint util::load_shader(GLenum type, const std::string &file){
 	GLint status;
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 	if (status == GL_FALSE){
-		std::cerr << "loadShader: ";
+		std::cerr << "load_shader: ";
 		switch (type){
 		case GL_VERTEX_SHADER:
 			std::cerr << "Vertex shader: ";
@@ -87,7 +87,7 @@ GLint util::load_program(const std::vector<std::tuple<GLenum, std::string>> &sha
 	for (const std::tuple<GLenum, std::string> &s : shaders){
 		GLint h = load_shader(std::get<0>(s), std::get<1>(s));
 		if (h == -1){
-			std::cerr << "loadProgram: A required shader failed to compile, aborting\n";
+			std::cerr << "load_program: A required shader failed to compile, aborting\n";
 			for (GLuint g : glshaders){
 				glDeleteShader(g);
 			}
@@ -103,7 +103,7 @@ GLint util::load_program(const std::vector<std::tuple<GLenum, std::string>> &sha
 	GLint status;
 	glGetProgramiv(program, GL_LINK_STATUS, &status);
 	if (status == GL_FALSE){
-		std::cerr << "loadProgram: Program failed to link, log:\n";
+		std::cerr << "load_program: Program failed to link, log:\n";
 		GLint len;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
 		char *log = new char[len];
@@ -156,8 +156,8 @@ GLuint util::load_texture(const std::string &file){
 	glTexImage2D(GL_TEXTURE_2D, 0, internal, surf->w, surf->h, 0, format,
 		GL_UNSIGNED_BYTE, surf->pixels);
 	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	SDL_FreeSurface(surf);
 	return tex;
 }
