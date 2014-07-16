@@ -12,11 +12,9 @@ layout(location = 7) in int tile_id;
 
 out vec3 fnormal;
 out vec2 fuv;
-flat out int ftile_id;
 
 void main(void){
 	fnormal = normal;
-	ftile_id = tile_id;
 	fuv = uvs[4 * tile_id + gl_VertexID];
 	gl_Position = model * vec4(pos, 1.f);
 }

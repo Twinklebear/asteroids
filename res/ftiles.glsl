@@ -2,7 +2,7 @@
 
 uniform sampler2D tile_atlas;
 
-flat out vec4 color;
+out vec4 color;
 
 in vec3 fnormal;
 in vec2 fuv;
