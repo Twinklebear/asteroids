@@ -8,6 +8,8 @@
 #include <tuple>
 #include <glm/glm.hpp>
 #include <SDL.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include "gl_core_3_3.h"
 #include "util.h"
 
@@ -121,44 +123,50 @@ GLint util::load_program(const std::vector<std::tuple<GLenum, std::string>> &sha
 	}
 	return program;
 }
+//Swap rows of n bytes pointed to by a with those pointed to by b
+//for use in doing the y-flip for images so OpenGL has them right-side up
+void swap_row(unsigned char *a, unsigned char *b, size_t n){
+	for (size_t i = 0; i < n; ++i){
+		std::swap(a[i], b[i]);
+	}
+}
 GLuint util::load_texture(const std::string &file){
-	SDL_Surface *surf = SDL_LoadBMP(file.c_str());
-	//TODO: Throw an error?
-	if (!surf){
-		std::cout << "Failed to load bmp: " << file
-			<< " SDL_error: " << SDL_GetError() << "\n";
+	int x, y, n;
+	unsigned char *img = stbi_load(file.c_str(), &x, &y, &n, 0);
+	if (!img){
+		std::cerr << "Failed to load image " << file
+			<< stbi_failure_reason() << std::endl;
 		return 0;
 	}
 	//Assume 4 or 3 bytes per pixel
-	GLenum format, internal;
-	if (surf->format->BytesPerPixel == 4){
-		internal = GL_RGBA;
-		if (surf->format->Rmask == 0x000000ff){
-			format = GL_RGBA;
-		}
-		else {
-			format = GL_BGRA;
-		}
-	}
-	else {
-		internal = GL_RGB;
-		if (surf->format->Rmask == 0x000000ff){
+	GLenum format;
+	switch (n){
+		case 1:
+			format = GL_RED;
+			break;
+		case 2:
+			format = GL_RG;
+			break;
+		case 3:
 			format = GL_RGB;
-		}
-		else {
-			format = GL_BGR;
-		}
+			break;
+		case 4:
+			format = GL_RGBA;
+			break;
 	}
+	for (int i = 0; i < y / 2; ++i){
+		swap_row(&img[i * x * n], &img[(y - i - 1) * x * n], x * n);
+	}
+	
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, internal, surf->w, surf->h, 0, format,
-		GL_UNSIGNED_BYTE, surf->pixels);
+	glTexImage2D(GL_TEXTURE_2D, 0, format, x, y, 0, format, GL_UNSIGNED_BYTE, img);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	SDL_FreeSurface(surf);
+	stbi_image_free(img);
 	return tex;
 }
 bool util::log_glerror(const std::string &msg){

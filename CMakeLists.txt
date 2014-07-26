@@ -30,6 +30,10 @@ ExternalProject_Add(lfwatch
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${lfwatch_DIR}
 )
 
+set(stb_image_INCLUDE_DIR "${Asteroids_SOURCE_DIR}/external/stb_image/include")
+file(DOWNLOAD "https://raw.githubusercontent.com/nothings/stb/master/stb_image.h"
+	"${stb_image_INCLUDE_DIR}/stb_image.h")
+
 # Bump up warning levels appropriately for each compiler
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -ggdb -std=c++11 -DGLM_FORCE_RADIANS")
@@ -51,6 +55,6 @@ if (WIN32)
 endif()
 
 include_directories(include ${entityx_INCLUDE_DIR} ${lfwatch_INCLUDE_DIR}
-   ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
+   ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${stb_image_INCLUDE_DIR})
 add_subdirectory(src)
 

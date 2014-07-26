@@ -100,21 +100,21 @@ void tile_demo(SDL_Window *win){
 		STD140Array<glm::vec2, 16> &uv_arr = tile_uvs.write<0>(0);
 		uv_arr[0] = glm::vec2{0, 0.5};
 		uv_arr[1] = glm::vec2{0.5, 0.5};
-		uv_arr[2] = glm::vec2{0, 0};
-		uv_arr[3] = glm::vec2{0.5, 0};
+		uv_arr[2] = glm::vec2{0, 1};
+		uv_arr[3] = glm::vec2{0.5, 1};
 
 		uv_arr[4] = glm::vec2{0.5, 0.5};
 		uv_arr[5] = glm::vec2{1, 0.5};
-		uv_arr[6] = glm::vec2{0.5, 0};
-		uv_arr[7] = glm::vec2{1, 0};
+		uv_arr[6] = glm::vec2{0.5, 1};
+		uv_arr[7] = glm::vec2{1, 1};
 
-		uv_arr[8] = glm::vec2{0, 1};
-		uv_arr[9] = glm::vec2{0.5, 1};
+		uv_arr[8] = glm::vec2{0, 0};
+		uv_arr[9] = glm::vec2{0.5, 0};
 		uv_arr[10] = glm::vec2{0, 0.5};
 		uv_arr[11] = glm::vec2{0.5, 0.5};
 
-		uv_arr[12] = glm::vec2{0.5, 1};
-		uv_arr[13] = glm::vec2{1, 1};
+		uv_arr[12] = glm::vec2{0.5, 0};
+		uv_arr[13] = glm::vec2{1, 0};
 		uv_arr[14] = glm::vec2{0.5, 0.5};
 		uv_arr[15] = glm::vec2{1, 0.5};
 	}
@@ -169,6 +169,7 @@ void tile_demo(SDL_Window *win){
 		SDL_GL_SwapWindow(win);
 		SDL_Delay(16);
 	}
+	glDeleteProgram(shader);
 	glDeleteTextures(1, &texture_atlas);
 }
 
