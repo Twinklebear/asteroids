@@ -139,7 +139,6 @@ GLuint util::load_texture(const std::string &file, size_t *width, size_t *height
 	if (height){
 		*height = y;
 	}
-	//Assume 4 or 3 bytes per pixel
 	GLenum format;
 	switch (n){
 		case 1:
@@ -158,7 +157,7 @@ GLuint util::load_texture(const std::string &file, size_t *width, size_t *height
 	for (int i = 0; i < y / 2; ++i){
 		swap_row(&img[i * x * n], &img[(y - i - 1) * x * n], x * n);
 	}
-	
+
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
@@ -168,6 +167,69 @@ GLuint util::load_texture(const std::string &file, size_t *width, size_t *height
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	stbi_image_free(img);
+	return tex;
+}
+GLuint util::load_texture_array(const std::vector<std::string> &files, size_t *w, size_t *h){
+	assert(!files.empty());
+	int x, y, n;
+	std::vector<unsigned char*> images;
+	//We need to load the first image to get the dimensions and format we're loading
+	images.push_back(stbi_load(files.front().c_str(), &x, &y, &n, 0));
+	if (w){
+		*w = x;
+	}
+	if (h){
+		*h = y;
+	}
+	for (auto it = ++files.begin(); it != files.end(); ++it){
+		int ix, iy, in;
+		images.push_back(stbi_load(it->c_str(), &ix, &iy, &in, 0));
+		if (x != ix || y != iy || n != in){
+			std::cerr << "load_texture_array error: Attempt to create array of incompatible images\n";
+			for (auto i : images){
+				stbi_image_free(i);
+			}
+			return 0;
+		}
+	}
+	//Perform y-swap on each loaded image
+	for (auto img : images){
+		for (int i = 0; i < y / 2; ++i){
+			swap_row(&img[i * x * n], &img[(y - i - 1) * x * n], x * n);
+		}
+	}
+	GLenum format;
+	switch (n){
+		case 1:
+			format = GL_RED;
+			break;
+		case 2:
+			format = GL_RG;
+			break;
+		case 3:
+			format = GL_RGB;
+			break;
+		case 4:
+			format = GL_RGBA;
+			break;
+	}
+
+	GLuint tex;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
+
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, format, x, y, images.size(), 0, format, GL_UNSIGNED_BYTE, NULL);
+	//Upload all the textures in the array
+	for (size_t i = 0; i < images.size(); ++i){
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, x, y, 1, format, GL_UNSIGNED_BYTE, images.at(i));
+	}
+	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//Clean up all the image data
+	for (auto i : images){
+		stbi_image_free(i);
+	}
 	return tex;
 }
 bool util::log_glerror(const std::string &msg){

@@ -36,15 +36,24 @@ namespace util {
 	 */
 	GLint load_program(const std::vector<std::tuple<GLenum, std::string>> &shaders);
 	/*
-	 * Load an image into an OpenGL texture. SDL is used to read the image into
-	 * a surface which is then passed to OpenGL. A new texture id is created
-	 * and returned if successful. The texture unit desired for this texture
-	 * should be set active before loading the texture as it will be bound during
-	 * the loading process
+	 * Load an image into a 2D texture, creating a new texture id
+	 * The texture unit desired for this texture should be set active
+	 * before loading the texture as it will be bound during the loading process
 	 * Can also optionally pass width & height variables to return the width
 	 * and height of the loaded image
 	 */
 	GLuint load_texture(const std::string &file, size_t *width = nullptr, size_t *height = nullptr);
+	/*
+	 * Load a series of images into a 2D texture array, creating a new texture id
+	 * The images will appear in the array in the same order they're passed in
+	 * It is an error if the images don't all have the same dimensions
+	 * or have different formats
+	 * The texture unit desired for this texture should be set active
+	 * before loading the texture as it will be bound during the loading process
+	 * Can also optionally pass width & height variables to return the width
+	 * and height of the loaded image
+	 */
+	GLuint load_texture_array(const std::vector<std::string> &files, size_t *w = nullptr, size_t *h = nullptr);
 	/*
 	 * Check for an OpenGL error and log it along with the message passed
 	 * if an error occured. Will return true if an error occured & was logged
