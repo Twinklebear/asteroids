@@ -83,7 +83,7 @@ void TextureAtlas::load(tinyxml2::XMLNode *node){
 		XMLElement *e = i->ToElement();
 		//The texture packer generic XML format
 		if (e->Attribute("n") && e->Attribute("x") && e->Attribute("y")
-				&& e->Attribute("w") && e->Attribute("h"))
+			&& e->Attribute("w") && e->Attribute("h"))
 		{
 			images[e->Attribute("n")] = SDL_Rect { e->IntAttribute("x"),
 				e->IntAttribute("y"), e->IntAttribute("w"),
@@ -91,7 +91,7 @@ void TextureAtlas::load(tinyxml2::XMLNode *node){
 		}
 		//The format used by Kenny.NL
 		else if (e->Attribute("name") && e->Attribute("x") && e->Attribute("y")
-				&& e->Attribute("width") && e->Attribute("height"))
+			&& e->Attribute("width") && e->Attribute("height"))
 		{
 			images[e->Attribute("name")] = SDL_Rect { e->IntAttribute("x"),
 				e->IntAttribute("y"), e->IntAttribute("width"),
