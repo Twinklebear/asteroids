@@ -11,13 +11,22 @@ set(entityx_DIR "${Asteroids_SOURCE_DIR}/external/entityx")
 # https://stackoverflow.com/questions/6351609/cmake-linking-to-library-downloaded-from-externalproject-add
 set(entityx_LIBRARY "${entityx_DIR}/lib/libentityx.a")
 set(entityx_INCLUDE_DIR "${entityx_DIR}/include")
-
 ExternalProject_Add(entityx
 	PREFIX ${entityx_DIR}
 	GIT_REPOSITORY https://github.com/alecthomas/entityx.git
 	GIT_TAG origin/0.1.x
 	INSTALL_DIR ${entityx_DIR}
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${entityx_DIR}
+)
+
+set(tinyxml2_DIR "${Asteroids_SOURCE_DIR}/external/tinyxml2")
+set(tinyxml2_LIBRARY "${tinyxml2_DIR}/lib/libtinyxml2.a")
+set(tinyxml2_INCLUDE_DIR "${tinyxml2_DIR}/include")
+ExternalProject_Add(tinyxml2
+	PREFIX ${tinyxml2_DIR}
+	GIT_REPOSITORY https://github.com/leethomason/tinyxml2.git
+	INSTALL_DIR ${tinyxml2_DIR}
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${tinyxml2_DIR}
 )
 
 set(lfwatch_DIR "${Asteroids_SOURCE_DIR}/external/lfwatch")
@@ -56,6 +65,7 @@ if (WIN32)
 endif()
 
 include_directories(include ${entityx_INCLUDE_DIR} ${lfwatch_INCLUDE_DIR}
-   ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${stb_image_INCLUDE_DIR})
+	${tinyxml2_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR}
+	${stb_image_INCLUDE_DIR})
 add_subdirectory(src)
 

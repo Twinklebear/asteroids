@@ -1,6 +1,6 @@
 Asteroids
 =
-An over-engineered implementation of Asteroids
+An over-engineered implementation of Asteroids. Also making use of some of [Kenny.nl](http://www.kenney.nl/)'s great art.
 
 Dependencies
 -

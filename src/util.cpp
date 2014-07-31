@@ -14,11 +14,6 @@
 #include "util.h"
 
 std::string util::get_resource_path(const std::string &sub_dir){
-#ifdef _WIN32
-	const char PATH_SEP = '\\';
-#else
-	const char PATH_SEP = '/';
-#endif
 	static std::string base_res;
 	if (base_res.empty()){
 		char *base_path = SDL_GetBasePath();
@@ -130,13 +125,19 @@ void swap_row(unsigned char *a, unsigned char *b, size_t n){
 		std::swap(a[i], b[i]);
 	}
 }
-GLuint util::load_texture(const std::string &file){
+GLuint util::load_texture(const std::string &file, size_t *width, size_t *height){
 	int x, y, n;
 	unsigned char *img = stbi_load(file.c_str(), &x, &y, &n, 0);
 	if (!img){
 		std::cerr << "Failed to load image " << file
 			<< stbi_failure_reason() << std::endl;
 		return 0;
+	}
+	if (width){
+		*width = x;
+	}
+	if (height){
+		*height = y;
 	}
 	//Assume 4 or 3 bytes per pixel
 	GLenum format;

@@ -9,6 +9,11 @@
 #include "interleavedbuffer.h"
 
 namespace util {
+#ifdef _WIN32
+	const char PATH_SEP = '\\';
+#else
+	const char PATH_SEP = '/';
+#endif
 	//Convert degrees to radians
 	constexpr float deg_to_rad(float deg){
 		return deg * 0.01745f;
@@ -36,10 +41,10 @@ namespace util {
 	 * and returned if successful. The texture unit desired for this texture
 	 * should be set active before loading the texture as it will be bound during
 	 * the loading process
-	 * Note: To lazy to setup a FindSDL2_Image for my windows machine so
-	 * just BMP support for now
+	 * Can also optionally pass width & height variables to return the width
+	 * and height of the loaded image
 	 */
-	GLuint load_texture(const std::string &file);
+	GLuint load_texture(const std::string &file, size_t *width = nullptr, size_t *height = nullptr);
 	/*
 	 * Check for an OpenGL error and log it along with the message passed
 	 * if an error occured. Will return true if an error occured & was logged

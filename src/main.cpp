@@ -6,6 +6,7 @@
 #include <entityx/entityx.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <tinyxml2.h>
 #include "gl_core_3_3.h"
 #include "util.h"
 #include "interleavedbuffer.h"
@@ -13,6 +14,7 @@
 #include "model.h"
 #include "level.h"
 #include "layout_padding.h"
+#include "texture_atlas.h"
 
 void run(SDL_Window *win);
 void tile_demo(SDL_Window *win);
@@ -26,6 +28,7 @@ int main(int argc, char **argv){
 		std::cerr << "SDL_Init error: " << SDL_GetError() << "\n";
 		return 1;
 	}
+
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -94,29 +97,28 @@ void tile_demo(SDL_Window *win){
 	assert(shader != -1);
 	glUseProgram(shader);
 
+	TextureAtlas atlas{res_path + "alienBlue.xml"};
+
 	InterleavedBuffer<Layout::STD140, STD140Array<glm::vec2, 16>> tile_uvs{1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	tile_uvs.map(GL_WRITE_ONLY);
 	{
 		STD140Array<glm::vec2, 16> &uv_arr = tile_uvs.write<0>(0);
-		uv_arr[0] = glm::vec2{0, 0.5};
-		uv_arr[1] = glm::vec2{0.5, 0.5};
-		uv_arr[2] = glm::vec2{0, 1};
-		uv_arr[3] = glm::vec2{0.5, 1};
-
-		uv_arr[4] = glm::vec2{0.5, 0.5};
-		uv_arr[5] = glm::vec2{1, 0.5};
-		uv_arr[6] = glm::vec2{0.5, 1};
-		uv_arr[7] = glm::vec2{1, 1};
-
-		uv_arr[8] = glm::vec2{0, 0};
-		uv_arr[9] = glm::vec2{0.5, 0};
-		uv_arr[10] = glm::vec2{0, 0.5};
-		uv_arr[11] = glm::vec2{0.5, 0.5};
-
-		uv_arr[12] = glm::vec2{0.5, 0};
-		uv_arr[13] = glm::vec2{1, 0};
-		uv_arr[14] = glm::vec2{0.5, 0.5};
-		uv_arr[15] = glm::vec2{1, 0.5};
+		std::array<glm::vec2, 4> uvs = atlas.uvs("alienBlue.png");
+		for (int i = 0; i < 4; ++i){
+			uv_arr[i] = uvs[i];
+		}
+		uvs = atlas.uvs("alienBlue_duck.png");
+		for (int i = 0; i < 4; ++i){
+			uv_arr[i + 4] = uvs[i];
+		}
+		uvs = atlas.uvs("alienBlue_hurt.png");
+		for (int i = 0; i < 4; ++i){
+			uv_arr[i + 8] = uvs[i];
+		}
+		uvs = atlas.uvs("alienBlue_jump.png");
+		for (int i = 0; i < 4; ++i){
+			uv_arr[i + 12] = uvs[i];
+		}
 	}
 	tile_uvs.unmap();
 	GLuint tile_uvs_block = glGetUniformBlockIndex(shader, "TileUVs");
@@ -128,8 +130,6 @@ void tile_demo(SDL_Window *win){
 	RenderBatch<glm::mat4, int> tiles{1, Model{res_path + "quad.obj"}};
 	tiles.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, -0.5}), 0));
 	tiles.set_attrib_indices(std::array<int, 2>{3, 7});
-
-	GLuint texture_atlas = util::load_texture(res_path + "ABCD.bmp");
 
 	bool quit = false;
 	while (!quit){
@@ -170,9 +170,7 @@ void tile_demo(SDL_Window *win){
 		SDL_Delay(16);
 	}
 	glDeleteProgram(shader);
-	glDeleteTextures(1, &texture_atlas);
 }
-
 void test_buffer(){
 	InterleavedBuffer<Layout::STD140, float, STD140Array<float, 10>> buf{1, GL_ARRAY_BUFFER, GL_STATIC_DRAW};
 
