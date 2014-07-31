@@ -21,8 +21,16 @@
  *     ...
  * </TextureAtlas>
  *
+ * Or the generic TexturePacker format (with comments and xml header removed)
+ *
+ * <TextureAtlas imagePath="image.png">
+ *     <sprite n="sprite_1" x="0" y="50" w="100" h="125" />
+ *     ...
+ * </TextureAtlas>
+ *
  * Note that the actual names of the tags don't matter, only that the
- * correct attributes are there.
+ * correct attributes are there. Only the first TextureAtlas child will
+ * be read in if multiple ones exist
  */
 class TextureAtlas {
 	GLuint texture;
@@ -64,6 +72,11 @@ private:
 	 * Load the texture atlas described by the xml file
 	 */
 	void load(const std::string &file);
+	/*
+	 * Load the information about the images in the atlas from
+	 * the children of the <TextureAtlas> node passed
+	 */
+	void load(tinyxml2::XMLNode *node);
 	/*
 	 * Map tinyxml errors to printable strings
 	 */

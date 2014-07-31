@@ -51,24 +51,56 @@ void TextureAtlas::load(const std::string &file){
 			<< get_xml_error(err) << std::endl;
 		assert(err == XML_SUCCESS);
 	}
-	XMLNode *n = doc.FirstChild();
+	XMLNode *n = doc.FirstChildElement("TextureAtlas");
 	if (n != nullptr){
 		XMLElement *e = n->ToElement();
+		if (!e->Attribute("imagePath")){
+			std::cerr << "TextureAtlas error: loading unsupported format" << std::endl;
+			assert(false);
+		}
 		std::string img_file = e->Attribute("imagePath");
 		img_file = file.substr(0, file.rfind(util::PATH_SEP) + 1) + img_file;
-		std::cout << "Image file is " << img_file << std::endl;
 		texture = util::load_texture(img_file, &width, &height);
-		//Iterate over all the subtextures in the xml document and load their positions
-		for (XMLNode *i = n->FirstChild(); i != nullptr; i = i->NextSibling()){
-			XMLElement *e = i->ToElement();
+		load(n);
+		//Warn the user if there are any TextureAtlas elements following this one
+		//since they'll be ignored
+		if (n->NextSiblingElement("TextureAtlas")){
+			std::cerr << "TextureAtlas warning: Ignoring other TextureAtlas definitions"
+				<< " in " << file << std::endl;
+		}
+	}
+	else {
+		std::cerr << "TextureAtlas error: " << file << " had no xml data\n";
+		assert(false);
+	}
+}
+void TextureAtlas::load(tinyxml2::XMLNode *node){
+	using namespace tinyxml2;
+	//Iterate over all the subtextures in the xml document and load their positions
+	for (XMLNode *i = node->FirstChild(); i != nullptr; i = i->NextSibling()){
+		//Support both the attribute format used by Kenny.NL and TexturePacker's
+		//generic XML output
+		XMLElement *e = i->ToElement();
+		//The texture packer generic XML format
+		if (e->Attribute("n") && e->Attribute("x") && e->Attribute("y")
+				&& e->Attribute("w") && e->Attribute("h"))
+		{
+			images[e->Attribute("n")] = SDL_Rect { e->IntAttribute("x"),
+				e->IntAttribute("y"), e->IntAttribute("w"),
+				e->IntAttribute("h") };
+		}
+		//The format used by Kenny.NL
+		else if (e->Attribute("name") && e->Attribute("x") && e->Attribute("y")
+				&& e->Attribute("width") && e->Attribute("height"))
+		{
 			images[e->Attribute("name")] = SDL_Rect { e->IntAttribute("x"),
 				e->IntAttribute("y"), e->IntAttribute("width"),
 				e->IntAttribute("height") };
 		}
-	}
-	else {
-		std::cerr << "TextureAtlas " << file << " had no xml data\n";
-		assert(false);
+		else {
+			std::cerr << "TextureAtlas error: loading unsupported format" << std::endl;
+			assert(false);
+		}
 	}
 }
 std::string TextureAtlas::get_xml_error(const tinyxml2::XMLError &error){
