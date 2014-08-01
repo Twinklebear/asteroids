@@ -133,14 +133,12 @@ public:
 	/*
 	 * Unmap the buffer, it's assumed the buffer was mapped as the type set
 	 * at creation.
-	 * TODO: Provide another version that stores any changes to the type at bind/unbind?
-	 * can a buffer be bound at multiple targets?
 	 */
 	void unmap(){
 		mode = 0;
 		data = nullptr;
 		map_end = 0;
-		bind();
+		bind(bound_target);
 		glUnmapBuffer(type);
 	}
 	/*
