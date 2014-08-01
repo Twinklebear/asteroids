@@ -17,8 +17,13 @@
  * It's assumed that the sprite locations in the document use the top-left
  * corner as [0, 0] and the appropriate flip is applied to return
  * the correct OpenGL uv coords through the uvs member
+ *
  * The textures will be loaded into a 2d texture array in the order they were
  * passed to the constructor
+ *
+ * Names of subtextures/sprites must be unique throughout the entire array
+ * to avoid name collisions
+ *
  * The document should be XML like so:
  *
  * <TextureAtlas imagePath="image.png">
