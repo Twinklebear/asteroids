@@ -161,11 +161,8 @@ GLuint util::load_texture(const std::string &file, size_t *width, size_t *height
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
-
 	glTexImage2D(GL_TEXTURE_2D, 0, format, x, y, 0, format, GL_UNSIGNED_BYTE, img);
 	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	stbi_image_free(img);
 	return tex;
 }
@@ -217,15 +214,12 @@ GLuint util::load_texture_array(const std::vector<std::string> &files, size_t *w
 	GLuint tex;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
-
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, format, x, y, images.size(), 0, format, GL_UNSIGNED_BYTE, NULL);
 	//Upload all the textures in the array
 	for (size_t i = 0; i < images.size(); ++i){
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, x, y, 1, format, GL_UNSIGNED_BYTE, images.at(i));
 	}
 	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	//Clean up all the image data
 	for (auto i : images){
 		stbi_image_free(i);
