@@ -3,6 +3,8 @@
 #include <string>
 #include <unordered_map>
 #include <array>
+#include <utility>
+#include <initializer_list>
 #include <SDL.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
@@ -20,7 +22,7 @@ TextureAtlas::~TextureAtlas(){
 SDL_Rect TextureAtlas::rect(const std::string &name) const {
 	auto f = images.find(name);
 	if (f == images.end()){
-		return SDL_Rect { 0, 0, 0, 0};
+		return SDL_Rect{0, 0, 0, 0};
 	}
 	return f->second;
 }
@@ -85,17 +87,17 @@ void TextureAtlas::load(tinyxml2::XMLNode *node){
 		if (e->Attribute("n") && e->Attribute("x") && e->Attribute("y")
 			&& e->Attribute("w") && e->Attribute("h"))
 		{
-			images[e->Attribute("n")] = SDL_Rect { e->IntAttribute("x"),
+			images[e->Attribute("n")] = SDL_Rect{e->IntAttribute("x"),
 				e->IntAttribute("y"), e->IntAttribute("w"),
-				e->IntAttribute("h") };
+				e->IntAttribute("h")};
 		}
 		//The format used by Kenny.NL
 		else if (e->Attribute("name") && e->Attribute("x") && e->Attribute("y")
 			&& e->Attribute("width") && e->Attribute("height"))
 		{
-			images[e->Attribute("name")] = SDL_Rect { e->IntAttribute("x"),
+			images[e->Attribute("name")] = SDL_Rect{e->IntAttribute("x"),
 				e->IntAttribute("y"), e->IntAttribute("width"),
-				e->IntAttribute("height") };
+				e->IntAttribute("height")};
 		}
 		else {
 			std::cerr << "TextureAtlas error: loading unsupported format" << std::endl;
@@ -103,7 +105,7 @@ void TextureAtlas::load(tinyxml2::XMLNode *node){
 		}
 	}
 }
-std::string TextureAtlas::get_xml_error(const tinyxml2::XMLError &error){
+std::string get_xml_error(const tinyxml2::XMLError &error){
 	using namespace tinyxml2;
 	switch (error){
 		case XML_NO_ATTRIBUTE:

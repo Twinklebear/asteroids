@@ -77,11 +77,11 @@ private:
 	 * the children of the <TextureAtlas> node passed
 	 */
 	void load(tinyxml2::XMLNode *node);
-	/*
-	 * Map tinyxml errors to printable strings
-	 */
-	static std::string get_xml_error(const tinyxml2::XMLError &error);
 };
+/*
+ * Map tinyxml errors to printable strings
+ */
+std::string get_xml_error(const tinyxml2::XMLError &error);
 
 #endif
 
