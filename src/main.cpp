@@ -15,6 +15,7 @@
 #include "level.h"
 #include "layout_padding.h"
 #include "texture_atlas.h"
+#include "texture_atlas_array.h"
 
 void run(SDL_Window *win);
 void tile_demo(SDL_Window *win);
@@ -97,25 +98,25 @@ void tile_demo(SDL_Window *win){
 	assert(shader != -1);
 	glUseProgram(shader);
 
-	TextureAtlas atlas{res_path + "alienBlue.xml"};
+	TextureAtlasArray atlas{res_path + "alienBlue.xml", res_path + "alienPink.xml"};
 
-	InterleavedBuffer<Layout::STD140, STD140Array<glm::vec2, 16>> tile_uvs{1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
+	InterleavedBuffer<Layout::STD140, STD140Array<glm::vec3, 16>> tile_uvs{1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	tile_uvs.map(GL_WRITE_ONLY);
 	{
-		STD140Array<glm::vec2, 16> &uv_arr = tile_uvs.write<0>(0);
-		std::array<glm::vec2, 4> uvs = atlas.uvs("alienBlue.png");
+		STD140Array<glm::vec3, 16> &uv_arr = tile_uvs.write<0>(0);
+		std::array<glm::vec3, 4> uvs = atlas.uvs("alienBlue.png");
 		for (int i = 0; i < 4; ++i){
 			uv_arr[i] = uvs[i];
 		}
-		uvs = atlas.uvs("alienBlue_duck.png");
+		uvs = atlas.uvs("alienBlue_jump.png");
 		for (int i = 0; i < 4; ++i){
 			uv_arr[i + 4] = uvs[i];
 		}
-		uvs = atlas.uvs("alienBlue_hurt.png");
+		uvs = atlas.uvs("alienPink.png");
 		for (int i = 0; i < 4; ++i){
 			uv_arr[i + 8] = uvs[i];
 		}
-		uvs = atlas.uvs("alienBlue_jump.png");
+		uvs = atlas.uvs("alienPink_jump.png");
 		for (int i = 0; i < 4; ++i){
 			uv_arr[i + 12] = uvs[i];
 		}
