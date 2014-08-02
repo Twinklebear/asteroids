@@ -19,30 +19,23 @@ TextureAtlas::TextureAtlas(const std::string &file){
 TextureAtlas::~TextureAtlas(){
 	glDeleteTextures(1, &texture);
 }
-SDL_Rect TextureAtlas::rect(const std::string &name) const {
+std::array<glm::vec2, 4> TextureAtlas::uvs(const std::string &name) const {
 	auto f = images.find(name);
 	if (f == images.end()){
-		return SDL_Rect{0, 0, 0, 0};
+		std::array<glm::vec2, 4> arr;
+		arr.fill(glm::vec2{-1, -1});
+		return arr;
 	}
 	return f->second;
 }
-std::array<glm::vec2, 4> TextureAtlas::uvs(const std::string &name) const {
-	auto f = images.find(name);
-	std::array<glm::vec2, 4> arr;
-	if (f == images.end()){
-		arr.fill(glm::vec2{0, 0});
-		return arr;
-	}
-	SDL_Rect r = f->second;
-	glm::vec2 dim{width, height};
-	arr[0] = glm::vec2{r.x, dim.y - r.y - r.h} / dim;
-	arr[1] = glm::vec2{r.x + r.w, dim.y - r.y - r.h} / dim;
-	arr[2] = glm::vec2{r.x, dim.y - r.y} / dim;
-	arr[3] = glm::vec2{r.x + r.w, dim.y - r.y} / dim;
-	return arr;
-}
 bool TextureAtlas::has_image(const std::string &name) const {
 	return images.find(name) != images.end();
+}
+TextureAtlas::const_iterator TextureAtlas::cbegin() const {
+	return images.cbegin();
+}
+TextureAtlas::const_iterator TextureAtlas::cend() const {
+	return images.cend();
 }
 void TextureAtlas::load(const std::string &file){
 	using namespace tinyxml2;
@@ -83,26 +76,35 @@ void TextureAtlas::load(tinyxml2::XMLNode *node){
 		//Support both the attribute format used by Kenny.NL and TexturePacker's
 		//generic XML output
 		XMLElement *e = i->ToElement();
+		SDL_Rect r;
+		std::string name;
 		//The texture packer generic XML format
 		if (e->Attribute("n") && e->Attribute("x") && e->Attribute("y")
 			&& e->Attribute("w") && e->Attribute("h"))
 		{
-			images[e->Attribute("n")] = SDL_Rect{e->IntAttribute("x"),
-				e->IntAttribute("y"), e->IntAttribute("w"),
-				e->IntAttribute("h")};
+			name = e->Attribute("n");
+			r = SDL_Rect{e->IntAttribute("x"), e->IntAttribute("y"),
+				e->IntAttribute("w"), e->IntAttribute("h")};
 		}
 		//The format used by Kenny.NL
 		else if (e->Attribute("name") && e->Attribute("x") && e->Attribute("y")
 			&& e->Attribute("width") && e->Attribute("height"))
 		{
-			images[e->Attribute("name")] = SDL_Rect{e->IntAttribute("x"),
-				e->IntAttribute("y"), e->IntAttribute("width"),
-				e->IntAttribute("height")};
+			name = e->Attribute("name");
+			r = SDL_Rect{e->IntAttribute("x"), e->IntAttribute("y"),
+				e->IntAttribute("width"), e->IntAttribute("height")};
 		}
 		else {
 			std::cerr << "TextureAtlas error: loading unsupported format" << std::endl;
 			assert(false);
 		}
+		glm::vec2 dim{width, height};
+		std::array<glm::vec2, 4> arr;
+		arr[0] = glm::vec2{r.x, dim.y - r.y - r.h} / dim;
+		arr[1] = glm::vec2{r.x + r.w, dim.y - r.y - r.h} / dim;
+		arr[2] = glm::vec2{r.x, dim.y - r.y} / dim;
+		arr[3] = glm::vec2{r.x + r.w, dim.y - r.y} / dim;
+		images[name] = arr;
 	}
 }
 std::string get_xml_error(const tinyxml2::XMLError &error){

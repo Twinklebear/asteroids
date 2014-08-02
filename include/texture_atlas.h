@@ -35,9 +35,14 @@
 class TextureAtlas {
 	GLuint texture;
 	size_t width, height;
-	std::unordered_map<std::string, SDL_Rect> images;
+	//Map of the uvs for each subtexture, accessed by subtexture name from
+	//the XML document
+	std::unordered_map<std::string, std::array<glm::vec2, 4>> images;
 
 public:
+	using const_iterator =
+		std::unordered_map<std::string, std::array<glm::vec2, 4>>::const_iterator;
+
 	/*
 	 * Load the texture atlas described by the xml file
 	 * it's assumed that the imagePath attribute of the
@@ -50,22 +55,21 @@ public:
 	 */
 	~TextureAtlas();
 	/*
-	 * Get the pixel coordinate rect for the location of some
-	 * image within the atlas, by name
-	 * returns { 0, 0, 0, 0} if the name isn't found
-	 */
-	SDL_Rect rect(const std::string &name) const;
-	/*
 	 * Get the floating point uv coordinates for the location
 	 * of some image within the atlas, by name
 	 * uvs will be { bottom left, bottom right, top left, top right }
-	 * returns all 0s if the name isn't found
+	 * returns all -1 if the name isn't found
 	 */
 	std::array<glm::vec2, 4> uvs(const std::string &name) const;
 	/*
 	 * Check if an image with some name is contained in this atlas
 	 */
 	bool has_image(const std::string &name) const;
+	/*
+	 * Get a const iterator to the beginning/end of the list of subtextures
+	 */
+	const_iterator cbegin() const;
+	const_iterator cend() const;
 
 private:
 	/*
