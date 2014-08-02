@@ -63,6 +63,10 @@ public:
 	 */
 	~TextureAtlasArray();
 	/*
+	 * Bind the texture to the 2d texture array target
+	 */
+	void bind();
+	/*
 	 * Get the floating point uv coordinates for the location
 	 * of some image within the atlas array, by name
 	 * uvs will be { bottom left, bottom right, top left, top right }

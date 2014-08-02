@@ -19,6 +19,9 @@ TextureAtlas::TextureAtlas(const std::string &file){
 TextureAtlas::~TextureAtlas(){
 	glDeleteTextures(1, &texture);
 }
+void TextureAtlas::bind(){
+	glBindTexture(GL_TEXTURE_2D, texture);
+}
 std::array<glm::vec2, 4> TextureAtlas::uvs(const std::string &name) const {
 	auto f = images.find(name);
 	if (f == images.end()){

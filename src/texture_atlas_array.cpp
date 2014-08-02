@@ -34,6 +34,9 @@ TextureAtlasArray::TextureAtlasArray(const std::initializer_list<std::string> &f
 TextureAtlasArray::~TextureAtlasArray(){
 	glDeleteTextures(1, &texture);
 }
+void TextureAtlasArray::bind(){
+	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+}
 std::array<glm::vec3, 4> TextureAtlasArray::uvs(const std::string &name) const {
 	auto f = images.find(name);
 	if (f == images.end()){
