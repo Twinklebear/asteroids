@@ -45,9 +45,11 @@
 class TextureAtlasArray {
 	GLuint texture;
 	size_t width, height;
-	std::unordered_map<std::string, std::pair<SDL_Rect, int>> images;
+	std::unordered_map<std::string, std::array<glm::vec3, 4>> images;
 
 public:
+	using const_iterator =
+		std::unordered_map<std::string, std::array<glm::vec3, 4>>::const_iterator;
 	/*
 	 * Load the texture atlases described by the xml files
 	 * it's assumed that the imagePath attribute of the
@@ -61,22 +63,21 @@ public:
 	 */
 	~TextureAtlasArray();
 	/*
-	 * Get the pixel coordinate rect for the location of some
-	 * image within the atlas array, by name
-	 * returns { [0, 0, 0, 0], -1} if the name isn't found
-	 */
-	std::pair<SDL_Rect, int> rect(const std::string &name) const;
-	/*
 	 * Get the floating point uv coordinates for the location
 	 * of some image within the atlas array, by name
 	 * uvs will be { bottom left, bottom right, top left, top right }
-	 * returns all 0s with negative array index (z value) if not found
+	 * returns all -1 if not found
 	 */
 	std::array<glm::vec3, 4> uvs(const std::string &name) const;
 	/*
 	 * Check if an image with some name is contained in this atlas
 	 */
 	bool has_image(const std::string &name) const;
+	/*
+	 * Get a const iterator to the beginning/end of the list of subtextures
+	 */
+	const_iterator cbegin() const;
+	const_iterator cend() const;
 
 private:
 	/*
@@ -93,6 +94,15 @@ private:
 	 * the atlas being loaded
 	 */
 	void load(tinyxml2::XMLNode *node, int img);
+	/*
+	 * Scale the sizes into normalized uv coordinates range
+	 * and set the y axis to match OpenGL
+	 * We need to defer this pass on the TextureAtlasArray
+	 * since we have to wait til we've read all the XML documents
+	 * passed to find the image files we're loading and thus
+	 * find their size
+	 */
+	void scale_uvs();
 };
 
 #endif

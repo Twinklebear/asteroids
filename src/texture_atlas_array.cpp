@@ -18,6 +18,7 @@ TextureAtlasArray::TextureAtlasArray(const std::vector<std::string> &files){
 		img_files.push_back(load(files.at(i), i));
 	}
 	texture = util::load_texture_array(img_files, &width, &height);
+	scale_uvs();
 }
 TextureAtlasArray::TextureAtlasArray(const std::initializer_list<std::string> &files){
 	//Track all the image files we need to load into the array
@@ -28,35 +29,28 @@ TextureAtlasArray::TextureAtlasArray(const std::initializer_list<std::string> &f
 		++i;
 	}
 	texture = util::load_texture_array(img_files, &width, &height);
+	scale_uvs();
 }
 TextureAtlasArray::~TextureAtlasArray(){
 	glDeleteTextures(1, &texture);
 }
-std::pair<SDL_Rect, int> TextureAtlasArray::rect(const std::string &name) const {
+std::array<glm::vec3, 4> TextureAtlasArray::uvs(const std::string &name) const {
 	auto f = images.find(name);
 	if (f == images.end()){
-		return std::make_pair(SDL_Rect{0, 0, 0, 0}, -1);
+		std::array<glm::vec3, 4> arr;
+		arr.fill(glm::vec3{-1, -1, -1});
+		return arr;
 	}
 	return f->second;
 }
-std::array<glm::vec3, 4> TextureAtlasArray::uvs(const std::string &name) const {
-	auto f = images.find(name);
-	std::array<glm::vec3, 4> arr;
-	if (f == images.end()){
-		arr.fill(glm::vec3{0, 0, -1});
-		return arr;
-	}
-	int i = f->second.second;
-	SDL_Rect r = f->second.first;
-	glm::vec3 dim{width, height, 1};
-	arr[0] = glm::vec3{r.x, dim.y - r.y - r.h, i} / dim;
-	arr[1] = glm::vec3{r.x + r.w, dim.y - r.y - r.h, i} / dim;
-	arr[2] = glm::vec3{r.x, dim.y - r.y, i} / dim;
-	arr[3] = glm::vec3{r.x + r.w, dim.y - r.y, i} / dim;
-	return arr;
-}
 bool TextureAtlasArray::has_image(const std::string &name) const {
 	return images.find(name) != images.end();
+}
+TextureAtlasArray::const_iterator TextureAtlasArray::cbegin() const {
+	return images.cbegin();
+}
+TextureAtlasArray::const_iterator TextureAtlasArray::cend() const {
+	return images.cend();
 }
 std::string TextureAtlasArray::load(const std::string &file, int img){
 	using namespace tinyxml2;
@@ -99,25 +93,43 @@ void TextureAtlasArray::load(tinyxml2::XMLNode *node, int img){
 		//Support both the attribute format used by Kenny.NL and TexturePacker's
 		//generic XML output
 		XMLElement *e = i->ToElement();
+		SDL_Rect r;
+		std::string name;
 		//The texture packer generic XML format
 		if (e->Attribute("n") && e->Attribute("x") && e->Attribute("y")
 			&& e->Attribute("w") && e->Attribute("h"))
 		{
-			images[e->Attribute("n")] = std::make_pair(SDL_Rect{e->IntAttribute("x"),
-				e->IntAttribute("y"), e->IntAttribute("w"),
-				e->IntAttribute("h")}, img);
+			name = e->Attribute("n");
+			r = SDL_Rect{e->IntAttribute("x"), e->IntAttribute("y"),
+				e->IntAttribute("w"), e->IntAttribute("h")};
 		}
 		//The format used by Kenny.NL
 		else if (e->Attribute("name") && e->Attribute("x") && e->Attribute("y")
 			&& e->Attribute("width") && e->Attribute("height"))
 		{
-			images[e->Attribute("name")] = std::make_pair(SDL_Rect{e->IntAttribute("x"),
-				e->IntAttribute("y"), e->IntAttribute("width"),
-				e->IntAttribute("height")}, img);
+			name = e->Attribute("name");
+			r = SDL_Rect{e->IntAttribute("x"), e->IntAttribute("y"),
+				e->IntAttribute("width"), e->IntAttribute("height")};
 		}
 		else {
 			std::cerr << "TextureAtlas error: loading unsupported format" << std::endl;
 			assert(false);
+		}
+		//We do the scaling & y orientation change to normalized uv coords late
+		//since at this point we don't know the image dimensions
+		std::array<glm::vec3, 4> arr;
+		arr[0] = glm::vec3{r.x, r.y + r.h, img};
+		arr[1] = glm::vec3{r.x + r.w, r.y + r.h, img};
+		arr[2] = glm::vec3{r.x, r.y, img};
+		arr[3] = glm::vec3{r.x + r.w, r.y, img};
+		images[name] = arr;
+	}
+}
+void TextureAtlasArray::scale_uvs(){
+	glm::vec3 dim{width, height, 1};
+	for (auto &u : images){
+		for (auto &v : u.second){
+			v = glm::vec3{v.x, dim.y - v.y, v.z} / dim;
 		}
 	}
 }
