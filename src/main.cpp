@@ -10,6 +10,7 @@
 #include "gl_core_3_3.h"
 #include "util.h"
 #include "interleavedbuffer.h"
+#include "interleavedtexbuffer.h"
 #include "renderbatch.h"
 #include "model.h"
 #include "level.h"
@@ -99,38 +100,39 @@ void tile_demo(SDL_Window *win){
 	glUseProgram(shader);
 
 	TextureAtlasArray atlas{res_path + "alienBlue.xml", res_path + "alienPink.xml"};
-
 	for (auto it = atlas.cbegin(); it != atlas.cend(); ++it){
 		std::cout << "img " << it->first
 			<< " bottom left at " << glm::to_string(it->second[0])
 			<< std::endl;
 	}
 
-	InterleavedBuffer<Layout::STD140, STD140Array<glm::vec3, 16>> tile_uvs{1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
+	//Note: we need to use a 4 component vector here due to the 3-component limitation mentioned below
+	InterleavedBuffer<Layout::PACKED, glm::vec4> tile_uvs{16, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	tile_uvs.map(GL_WRITE_ONLY);
-	{
-		STD140Array<glm::vec3, 16> &uv_arr = tile_uvs.write<0>(0);
-		std::array<glm::vec3, 4> uvs = atlas.uvs("alienBlue.png");
-		for (int i = 0; i < 4; ++i){
-			uv_arr[i] = uvs[i];
-		}
-		uvs = atlas.uvs("alienBlue_jump.png");
-		for (int i = 0; i < 4; ++i){
-			uv_arr[i + 4] = uvs[i];
-		}
-		uvs = atlas.uvs("alienPink.png");
-		for (int i = 0; i < 4; ++i){
-			uv_arr[i + 8] = uvs[i];
-		}
-		uvs = atlas.uvs("alienPink_jump.png");
-		for (int i = 0; i < 4; ++i){
-			uv_arr[i + 12] = uvs[i];
-		}
+	std::array<glm::vec3, 4> uvs = atlas.uvs("alienBlue.png");
+	for (int i = 0; i < 4; ++i){
+		tile_uvs.write<0>(i) = glm::vec4{uvs[i], 0};
+	}
+	uvs = atlas.uvs("alienBlue_jump.png");
+	for (int i = 0; i < 4; ++i){
+		tile_uvs.write<0>(i + 4) = glm::vec4{uvs[i], 0};
+	}
+	uvs = atlas.uvs("alienPink.png");
+	for (int i = 0; i < 4; ++i){
+		tile_uvs.write<0>(i + 8) = glm::vec4{uvs[i], 0};
+	}
+	uvs = atlas.uvs("alienPink_jump.png");
+	for (int i = 0; i < 4; ++i){
+		tile_uvs.write<0>(i + 12) = glm::vec4{uvs[i], 0};
 	}
 	tile_uvs.unmap();
-	GLuint tile_uvs_block = glGetUniformBlockIndex(shader, "TileUVs");
-	glUniformBlockBinding(shader, tile_uvs_block, 0);
-	tile_uvs.bind_base(0);
+
+	glActiveTexture(GL_TEXTURE1);
+	//Not using a 3-component texture here as it requires GL4.0+ or ARB_texture_buffer_object_rgb32
+	InterleavedTexBuffer<glm::vec4> tex_buf{GL_RGBA32F, tile_uvs};
+
+	GLuint tile_uvs_sampler = glGetUniformLocation(shader, "uvs");
+	glUniform1i(tile_uvs_sampler, 1);
 
 	//Tiles are positioned by a full transformation matrix and the tile type is specified
 	//by an int id

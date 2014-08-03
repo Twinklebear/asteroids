@@ -1,8 +1,6 @@
 #version 330 core
 
-layout(std140) uniform TileUVs {
-	vec3 uvs[16];
-};
+uniform samplerBuffer uvs;
 
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec3 normal;
@@ -14,7 +12,7 @@ out vec3 fuv;
 
 void main(void){
 	fnormal = normal;
-	fuv = uvs[4 * tile_id + gl_VertexID];
+	fuv = texelFetch(uvs, 4 * tile_id + gl_VertexID).xyz;
 	gl_Position = model * vec4(pos, 1.f);
 }
 

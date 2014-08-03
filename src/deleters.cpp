@@ -7,4 +7,7 @@ void detail::delete_buffer(GLuint *b){
 void detail::delete_vao(GLuint *a){
 	glDeleteBuffers(1, a);
 }
+void detail::delete_texture(GLuint *t){
+	glDeleteTextures(1, t);
+}
 

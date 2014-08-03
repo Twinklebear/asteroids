@@ -10,8 +10,8 @@ namespace detail {
 	 */
 	void delete_buffer(GLuint *b);
 	void delete_vao(GLuint *a);
+	void delete_texture(GLuint *t);
 }
-
 
 #endif
 

@@ -27,6 +27,8 @@
 template<Layout L, typename... Args>
 class InterleavedBuffer {
 	size_t capacity, stride_;
+	//TODO: Maybe we shouldn't ref-count the buffer handle but have copy ctor to move the
+	//data about and push lifetime tracking to using shared_ptr of interleaved buffers
 	std::shared_ptr<GLuint> buffer;
 	GLenum mode, type, access, bound_target;
 	char *data;
@@ -58,11 +60,17 @@ public:
 		}
 	}
 	~InterleavedBuffer(){
-		//If they forgot to unmap the buffer
-		if (data != nullptr){
+		//If they forgot to unmap the buffer and we're the last one using it
+		if (data != nullptr && buffer.use_count() == 1){
 			glBindBuffer(type, *buffer);
 			glUnmapBuffer(type);
 		}
+	}
+	/*
+	 * Get the buffer id
+	 */
+	GLuint buf(){
+		return *buffer;
 	}
 	/*
 	 * Bind the buffer to the type target specified at creation
@@ -224,6 +232,7 @@ public:
 	}
 	/*
 	 * Reserve some capacity for the buffer
+	 * TODO: Will this behave properly for tex buffer?
 	 */
 	void reserve(size_t new_cap){
 		if (new_cap > capacity){
