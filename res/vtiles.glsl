@@ -8,11 +8,11 @@ layout(location = 3) in mat4 model;
 layout(location = 7) in int tile_id;
 
 out vec3 fnormal;
-out vec3 fuv;
+out vec2 fuv;
 
 void main(void){
 	fnormal = normal;
-	fuv = texelFetch(uvs, 4 * tile_id + gl_VertexID).xyz;
+	fuv = texelFetch(uvs, 4 * tile_id + gl_VertexID).xy;
 	gl_Position = model * vec4(pos, 1.f);
 }
 

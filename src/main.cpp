@@ -99,45 +99,31 @@ void tile_demo(SDL_Window *win){
 	assert(shader != -1);
 	glUseProgram(shader);
 
-	TextureAtlasArray atlas{res_path + "alienBlue.xml", res_path + "alienPink.xml"};
-	for (auto it = atlas.cbegin(); it != atlas.cend(); ++it){
-		std::cout << "img " << it->first
-			<< " bottom left at " << glm::to_string(it->second[0])
-			<< std::endl;
-	}
+	TextureAtlas atlas{res_path + "tiles_spritesheet.xml"};
 
-	//Note: we need to use a 4 component vector here due to the 3-component limitation mentioned below
-	InterleavedBuffer<Layout::PACKED, glm::vec4> tile_uvs{16, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
+	InterleavedBuffer<Layout::PACKED, glm::vec2> tile_uvs{atlas.size() * 4,
+		GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
 	tile_uvs.map(GL_WRITE_ONLY);
-	std::array<glm::vec3, 4> uvs = atlas.uvs("alienBlue.png");
-	for (int i = 0; i < 4; ++i){
-		tile_uvs.write<0>(i) = glm::vec4{uvs[i], 0};
-	}
-	uvs = atlas.uvs("alienBlue_jump.png");
-	for (int i = 0; i < 4; ++i){
-		tile_uvs.write<0>(i + 4) = glm::vec4{uvs[i], 0};
-	}
-	uvs = atlas.uvs("alienPink.png");
-	for (int i = 0; i < 4; ++i){
-		tile_uvs.write<0>(i + 8) = glm::vec4{uvs[i], 0};
-	}
-	uvs = atlas.uvs("alienPink_jump.png");
-	for (int i = 0; i < 4; ++i){
-		tile_uvs.write<0>(i + 12) = glm::vec4{uvs[i], 0};
+	int i = 0;
+	std::unordered_map<std::string, int> tile_ids;
+	for (auto it = atlas.cbegin(); it != atlas.cend(); ++it){
+		tile_ids[it->first] = i;
+		for (int j = 0; j < 4; ++j){
+			tile_uvs.write<0>(4 * i + j) = it->second[j];
+		}
+		++i;
 	}
 	tile_uvs.unmap();
 
 	glActiveTexture(GL_TEXTURE1);
-	//Not using a 3-component texture here as it requires GL4.0+ or ARB_texture_buffer_object_rgb32
-	InterleavedTexBuffer<glm::vec4> tex_buf{GL_RGBA32F, tile_uvs};
-
+	InterleavedTexBuffer<glm::vec2> tex_buf{GL_RG32F, tile_uvs};
 	GLuint tile_uvs_sampler = glGetUniformLocation(shader, "uvs");
 	glUniform1i(tile_uvs_sampler, 1);
 
 	//Tiles are positioned by a full transformation matrix and the tile type is specified
 	//by an int id
 	RenderBatch<glm::mat4, int> tiles{1, Model{res_path + "quad.obj"}};
-	tiles.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, -0.5}), 0));
+	tiles.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, -0.5}), tile_ids["fence.png"]));
 	tiles.set_attrib_indices(std::array<int, 2>{3, 7});
 
 	bool quit = false;
@@ -150,17 +136,33 @@ void tile_demo(SDL_Window *win){
 			else if (e.type == SDL_KEYDOWN){
 				int tile_id;
 				switch (e.key.keysym.sym){
+					case SDLK_1:
+						tile_id = tile_ids["fence.png"];
+						break;
 					case SDLK_2:
-						tile_id = 1;
+						tile_id = tile_ids["torch.png"];
 						break;
 					case SDLK_3:
-						tile_id = 2;
+						tile_id = tile_ids["bridge.png"];
 						break;
 					case SDLK_4:
-						tile_id = 3;
+						tile_id = tile_ids["dirt.png"];
+						break;
+					case SDLK_5:
+						tile_id = tile_ids["castle.png"];
+						break;
+					case SDLK_6:
+						tile_id = tile_ids["grass.png"];
+						break;
+					case SDLK_7:
+						tile_id = tile_ids["hill_large.png"];
+						break;
+					case SDLK_8:
+						tile_id = tile_ids["boxCoin.png"];
 						break;
 					default:
-						tile_id = 0;
+						tile_id = tile_ids["box.png"];
+						break;
 				}
 				auto buffer = tiles.buffer();
 				buffer.map(GL_WRITE_ONLY);
