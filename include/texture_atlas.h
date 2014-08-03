@@ -74,6 +74,10 @@ public:
 	 */
 	const_iterator cbegin() const;
 	const_iterator cend() const;
+	/*
+	 * Get the number of subtextures in this texture atlas
+	 */
+	size_t size() const;
 
 private:
 	/*

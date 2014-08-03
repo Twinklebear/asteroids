@@ -40,6 +40,9 @@ TextureAtlas::const_iterator TextureAtlas::cbegin() const {
 TextureAtlas::const_iterator TextureAtlas::cend() const {
 	return images.cend();
 }
+size_t TextureAtlas::size() const {
+	return images.size();
+}
 void TextureAtlas::load(const std::string &file){
 	using namespace tinyxml2;
 	XMLDocument doc;
