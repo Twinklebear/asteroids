@@ -232,7 +232,6 @@ public:
 	}
 	/*
 	 * Reserve some capacity for the buffer
-	 * TODO: Will this behave properly for tex buffer?
 	 */
 	void reserve(size_t new_cap){
 		if (new_cap > capacity){
