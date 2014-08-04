@@ -73,7 +73,7 @@ int main(int argc, char **argv){
 	return 0;
 }
 void run(SDL_Window *win){
-	
+
 	Level level;
 	level.start();
 	while (!level.should_quit()){
@@ -120,7 +120,7 @@ void tile_demo(SDL_Window *win){
 	//Tiles are positioned by a full transformation matrix and the tile type is specified
 	//by an int id
 	RenderBatch<glm::mat4, int> tiles{1, std::make_shared<Model>(res_path + "quad.obj")};
-	tiles.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, -0.5}), tile_ids["fence.png"]));
+	tiles.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, 0}), tile_ids["fence.png"]));
 	tiles.set_attrib_indices(std::array<int, 2>{3, 7});
 
 	bool quit = false;
