@@ -96,6 +96,16 @@ void tile_demo(SDL_Window *win){
 	assert(shader != -1);
 	glUseProgram(shader);
 
+	InterleavedBuffer<Layout::STD140, glm::mat4> viewing{2, GL_UNIFORM_BUFFER, GL_STATIC_DRAW};;
+	viewing.map(GL_WRITE_ONLY);
+	viewing.write<0>(0) = glm::lookAt(glm::vec3{0.f, 0.f, 5.f}, glm::vec3{0.f, 0.f, 0.f},
+		glm::vec3{0.f, 1.f, 0.f});
+	viewing.write<0>(1) = glm::ortho(-32.f, 32.f, -24.f, 24.f, 1.f, 100.f);
+	viewing.unmap();
+	GLuint viewing_block = glGetUniformBlockIndex(shader, "Viewing");
+	glUniformBlockBinding(shader, viewing_block, 0);
+	viewing.bind_base(0);
+
 	TextureAtlas atlas{res_path + "tiles_spritesheet.xml"};
 
 	auto tile_uvs = std::make_shared<InterleavedBuffer<Layout::PACKED, glm::vec2>>(atlas.size() * 4,
@@ -120,7 +130,7 @@ void tile_demo(SDL_Window *win){
 	//Tiles are positioned by a full transformation matrix and the tile type is specified
 	//by an int id
 	RenderBatch<glm::mat4, int> tiles{1, std::make_shared<Model>(res_path + "quad.obj")};
-	tiles.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, 0}), tile_ids["fence.png"]));
+	tiles.push_back(std::make_tuple(glm::scale(glm::vec3{3.2, 3.2, 1}), tile_ids["fence.png"]));
 	tiles.set_attrib_indices(std::array<int, 2>{3, 7});
 
 	bool quit = false;
@@ -152,10 +162,13 @@ void tile_demo(SDL_Window *win){
 						tile_id = tile_ids["grass.png"];
 						break;
 					case SDLK_7:
-						tile_id = tile_ids["hill_large.png"];
+						tile_id = tile_ids["lock_blue.png"];
 						break;
 					case SDLK_8:
 						tile_id = tile_ids["boxCoin.png"];
+						break;
+					case SDLK_9:
+						tile_id = tile_ids["window.png"];
 						break;
 					default:
 						tile_id = tile_ids["box.png"];
