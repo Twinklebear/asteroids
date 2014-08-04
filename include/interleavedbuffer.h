@@ -6,7 +6,6 @@
 #include <memory>
 #include <tuple>
 #include "gl_core_3_3.h"
-#include "deleters.h"
 #include "sequence.h"
 #include "type_at.h"
 #include "ptr_tuple.h"
@@ -27,15 +26,16 @@
 template<Layout L, typename... Args>
 class InterleavedBuffer {
 	size_t capacity, stride_;
-	//TODO: Maybe we shouldn't ref-count the buffer handle but have copy ctor to move the
-	//data about and push lifetime tracking to using shared_ptr of interleaved buffers
-	std::shared_ptr<GLuint> buffer;
+	GLuint buffer;
 	GLenum mode, type, access, bound_target;
 	char *data;
 	//Used for tracking where a mapped range begins and ends
 	//if a range isn't mapped end is 0
 	size_t map_start, map_end;
 	std::array<size_t, sizeof...(Args)> offsets;
+	//If we're allowed to change the buffer name when resizing,
+	//letting us save 1 alloc, 1 free and 1 copy
+	bool allow_name_change;
 
 	using Size = detail::Size<L, Args...>;
 	using Offset = detail::Offset<L, Args...>;
@@ -46,48 +46,86 @@ public:
 	/*
 	 * Create an interleaved buffer with capable of storing capacity blocks of
 	 * Args. The buffer will be of the type passed and use the desired access flag
+	 * If allow_name_change is true the buffer will move to a new name when it's resized
+	 * instead of preserving the old name. This requires fewer operations but will break
+	 * any bindings associated with the buffer. The default is false to make the buffer
+	 * simpler to work with.
 	 */
-	InterleavedBuffer(size_t capacity, GLenum type, GLenum access)
-		: capacity(capacity), stride_(Size::size()), buffer(nullptr),
+	InterleavedBuffer(size_t capacity, GLenum type, GLenum access, bool allow_name_change = false)
+		: capacity(capacity), stride_(Size::size()), buffer(0),
 		mode(0), type(type), access(access), data(nullptr), map_start(0), map_end(0),
-		offsets(Offset::offsets())
+		offsets(Offset::offsets()), allow_name_change(allow_name_change)
 	{
-		buffer = std::shared_ptr<GLuint>(new GLuint{0}, detail::delete_buffer);
-		glGenBuffers(1, &(*buffer));
-		glBindBuffer(type, *buffer);
+		glGenBuffers(1, &buffer);
+		glBindBuffer(type, buffer);
 		if (capacity > 0){
 			glBufferData(type, capacity * stride_, NULL, access);
 		}
 	}
 	~InterleavedBuffer(){
 		//If they forgot to unmap the buffer and we're the last one using it
-		if (data != nullptr && buffer.use_count() == 1){
-			glBindBuffer(type, *buffer);
+		if (data != nullptr){
+			bind(bound_target);
 			glUnmapBuffer(type);
 		}
+		glDeleteBuffers(1, &buffer);
+	}
+	InterleavedBuffer(const InterleavedBuffer&) = delete;
+	InterleavedBuffer& operator=(const InterleavedBuffer&) = delete;
+	/*
+	 * Move the ownership of a buffer into a new object. After moving the previous
+	 * object will no longer hold a valid buffer and should either be re-created or
+	 * no longer used
+	 */
+	InterleavedBuffer(InterleavedBuffer &&b)
+		: capacity(b.capacity), stride_(b.stride_), buffer(b.buffer),
+		mode(b.mode), type(b.type), access(b.access), bound_target(b.bound_target),
+		data(b.data), map_start(b.map_start), map_end(b.map_end), offsets(b.offsets),
+		allow_name_change(b.allow_name_change)
+	{
+		b.drop_buffer();
+	}
+	InterleavedBuffer& operator=(InterleavedBuffer &&b){
+		if (this == &b){
+			return *this;
+		}
+		capacity = b.capacity;
+		stride_ = b.stride_;
+		buffer = b.buffer;
+		mode = b.mode;
+		type = b.type;
+		access = b.access;
+		bound_target = b.bound_target;
+		data = b.data;
+		map_start = b.map_start;
+		map_end = b.map_end;
+		offsets = b.offsets;
+		allow_name_change = b.allow_name_change;
+		b.drop_buffer();
+		return *this;
 	}
 	/*
 	 * Get the buffer id
 	 */
 	GLuint buf(){
-		return *buffer;
+		return buffer;
 	}
 	/*
 	 * Bind the buffer to the type target specified at creation
 	 */
 	void bind(){
-		assert(buffer != nullptr);
+		assert(buffer != 0);
 		bound_target = type;
-		glBindBuffer(bound_target, *buffer);
+		glBindBuffer(bound_target, buffer);
 	}
 	/*
 	 * Bind the buffer to some other type target. This will not change
 	 * the stored type of the buffer, just bind it to some other binding point
 	 */
 	void bind(GLenum target){
-		assert(buffer != nullptr);
+		assert(buffer != 0);
 		bound_target = target;
-		glBindBuffer(bound_target, *buffer);
+		glBindBuffer(bound_target, buffer);
 	}
 	/*
 	 * Reset the binding point the buffer is currently bound to
@@ -99,9 +137,9 @@ public:
 	 * Bind the entire buffer to the desired indexed buffer target
 	 */
 	void bind_base(int index){
-		assert(buffer != nullptr);
+		assert(buffer != 0);
 		bound_target = type;
-		glBindBufferBase(bound_target, index, *buffer);
+		glBindBufferBase(bound_target, index, buffer);
 	}
 	/*
 	 * Map the entire buffer for access with the desired mode, m
@@ -234,20 +272,46 @@ public:
 	 * Reserve some capacity for the buffer
 	 */
 	void reserve(size_t new_cap){
-		if (new_cap > capacity){
-			GLuint new_buf;
-			glGenBuffers(1, &new_buf);
-			glBindBuffer(type, new_buf);
-			glBufferData(type, new_cap * stride_, NULL, access);
-			glBindBuffer(GL_COPY_WRITE_BUFFER, new_buf);
-			glBindBuffer(GL_COPY_READ_BUFFER, *buffer);
-			if (capacity > 0){
-				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0,
-					capacity * stride_);
-			}
-			buffer = std::shared_ptr<GLuint>(new GLuint{new_buf}, detail::delete_buffer);
-			capacity = new_cap;
+		if (new_cap < capacity){
+			return;
 		}
+		//If there's no old data we need to preserve we can just allocate
+		//the new capacity
+		if (capacity == 0){
+			glBindBuffer(type, buffer);
+			glBufferData(type, new_cap * stride_, NULL, access);
+		}
+		else {
+			GLuint tmp;
+			glGenBuffers(1, &tmp);
+			glBindBuffer(type, tmp);
+			//If we're allowed to change the buffer name then we're moving over
+			//to this new name and should allocate enough room for the new capacity
+			if (allow_name_change){
+				glBufferData(type, new_cap * stride_, NULL, access);
+			}
+			//If we can't change names then just make enough room to save the old data
+			//while we re-alloc the old name
+			else {
+				glBufferData(type, capacity * stride_, NULL, access);
+			}
+			glBindBuffer(GL_COPY_WRITE_BUFFER, tmp);
+			glBindBuffer(GL_COPY_READ_BUFFER, buffer);
+			glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, capacity * stride_);
+			if (allow_name_change){
+				glDeleteBuffers(1, &buffer);
+				buffer = tmp;
+			}
+			//If we can't change names now we need to resize the old buffer and move the old data back
+			else {
+				glBindBuffer(GL_COPY_WRITE_BUFFER, buffer);
+				glBindBuffer(GL_COPY_READ_BUFFER, tmp);
+				glBufferData(GL_COPY_WRITE_BUFFER, new_cap * stride_, NULL, access);
+				glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, capacity * stride_);
+				glDeleteBuffers(1, &tmp);
+			}
+		}
+		capacity = new_cap;
 	}
 	/*
 	 * Get the number of blocks stored in the buffer
@@ -312,6 +376,24 @@ private:
 	template<int N>
 	void at(size_t i, PtrTuple &t, detail::Sequence<N>){
 		std::get<N>(t) = &get<N>(i);
+	}
+	/*
+	 * Zero out all the members of the object dumping its information and reference
+	 * too a previously owned buffer. This is used by the move ctor/assign to remove
+	 * ownership from the old object
+	 */
+	void drop_buffer(){
+		capacity = 0;
+		stride_ = 0;
+		buffer = 0;
+		mode = 0;
+		type = 0;
+		access = 0;
+		bound_target = 0;
+		data = nullptr;
+		map_start = 0;
+		map_end = 0;
+		offsets.fill(0);
 	}
 };
 
