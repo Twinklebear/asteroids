@@ -58,7 +58,7 @@ public:
 		attributes.unmap();
 		size += objs.size();
 	}
-	/**
+	/*
 	 * Add a single instance to be drawn. Try not to use this function as
 	 * the buffer must be mapped and unmapped to write a single item,
 	 * which is slow

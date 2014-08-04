@@ -65,7 +65,6 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
-	run(win);
 	tile_demo(win);
 
 	SDL_GL_DeleteContext(context);
