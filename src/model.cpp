@@ -8,21 +8,38 @@
 #include "interleavedbuffer.h"
 #include "model.h"
 
-Model::Model(const std::string &file) : vao(new GLuint{0}, detail::delete_vao),
-	vbo(0, GL_ARRAY_BUFFER, GL_STATIC_DRAW), ebo(0, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),
-	n_elems(0)
+Model::Model(const std::string &file) : vao(0), vbo(0, GL_ARRAY_BUFFER, GL_STATIC_DRAW),
+	ebo(0, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW), n_elems(0)
 {
-	glGenVertexArrays(1, &(*vao));
+	glGenVertexArrays(1, &vao);
 	load(file);
 }
+Model::~Model(){
+	glDeleteVertexArrays(1, &vao);
+}
+Model::Model(Model &&m): vao(m.vao), vbo(std::move(m.vbo)),
+	ebo(std::move(m.ebo)), n_elems(m.n_elems)
+{
+	m.dump_model();
+}
+Model& Model::operator=(Model &&m){
+	if (this != &m){
+		vao = m.vao;
+		vbo = std::move(m.vbo);
+		ebo = std::move(m.ebo);
+		n_elems = m.n_elems;
+		m.dump_model();
+	}
+	return *this;
+}
 void Model::bind(){
-	glBindVertexArray(*vao);
+	glBindVertexArray(vao);
 }
 size_t Model::elems(){
 	return n_elems;
 }
 void Model::load(const std::string &file){
-	glBindVertexArray(*vao);
+	glBindVertexArray(vao);
 	if (!util::load_obj(file, vbo, ebo, n_elems)){
 		std::cerr << "Model " << file << " failed to load\n";
 		return;
@@ -35,5 +52,9 @@ void Model::load(const std::string &file){
 	}
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, vbo.stride(), (void*)(vbo.offset(2)));
+}
+void Model::dump_model(){
+	vao = 0;
+	n_elems = 0;
 }
 

@@ -52,6 +52,8 @@ int main(int argc, char **argv){
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << "\n"
 		<< "OpenGL Vendor: " << glGetString(GL_VENDOR) << "\n"
@@ -63,6 +65,7 @@ int main(int argc, char **argv){
 	glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0,
 		NULL, GL_TRUE);
 
+	run(win);
 	tile_demo(win);
 
 	SDL_GL_DeleteContext(context);
@@ -71,11 +74,7 @@ int main(int argc, char **argv){
 	return 0;
 }
 void run(SDL_Window *win){
-	RenderBatch<glm::mat4, int> letters{2, Model{util::get_resource_path() + "quad.obj"}};
-	letters.set_attrib_indices(std::array<int, 2>{3, 7});
-	letters.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, 1}), 1));
-	letters.push_back(std::make_tuple(glm::translate(glm::vec3{3, 0, 1}), 2));
-
+	
 	Level level;
 	level.start();
 	while (!level.should_quit()){
@@ -86,7 +85,6 @@ void run(SDL_Window *win){
 		if (err != GL_NO_ERROR){
 			std::cerr << "OpenGL Error: " << std::hex << err << std::dec << "\n";
 		}
-		letters.render();
 		SDL_GL_SwapWindow(win);
 		//TODO VSync? proper time delays etc?
 		SDL_Delay(16);
@@ -101,19 +99,19 @@ void tile_demo(SDL_Window *win){
 
 	TextureAtlas atlas{res_path + "tiles_spritesheet.xml"};
 
-	InterleavedBuffer<Layout::PACKED, glm::vec2> tile_uvs{atlas.size() * 4,
-		GL_UNIFORM_BUFFER, GL_STATIC_DRAW};
-	tile_uvs.map(GL_WRITE_ONLY);
+	auto tile_uvs = std::make_shared<InterleavedBuffer<Layout::PACKED, glm::vec2>>(atlas.size() * 4,
+		GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	tile_uvs->map(GL_WRITE_ONLY);
 	int i = 0;
 	std::unordered_map<std::string, int> tile_ids;
 	for (auto it = atlas.cbegin(); it != atlas.cend(); ++it){
 		tile_ids[it->first] = i;
 		for (int j = 0; j < 4; ++j){
-			tile_uvs.write<0>(4 * i + j) = it->second[j];
+			tile_uvs->write<0>(4 * i + j) = it->second[j];
 		}
 		++i;
 	}
-	tile_uvs.unmap();
+	tile_uvs->unmap();
 
 	glActiveTexture(GL_TEXTURE1);
 	InterleavedTexBuffer<glm::vec2> tex_buf{GL_RG32F, tile_uvs};
@@ -122,7 +120,7 @@ void tile_demo(SDL_Window *win){
 
 	//Tiles are positioned by a full transformation matrix and the tile type is specified
 	//by an int id
-	RenderBatch<glm::mat4, int> tiles{1, Model{res_path + "quad.obj"}};
+	RenderBatch<glm::mat4, int> tiles{1, std::make_shared<Model>(res_path + "quad.obj")};
 	tiles.push_back(std::make_tuple(glm::translate(glm::vec3{0, 0, -0.5}), tile_ids["fence.png"]));
 	tiles.set_attrib_indices(std::array<int, 2>{3, 7});
 
@@ -134,7 +132,7 @@ void tile_demo(SDL_Window *win){
 				quit = true;
 			}
 			else if (e.type == SDL_KEYDOWN){
-				int tile_id;
+				int tile_id = 0;
 				switch (e.key.keysym.sym){
 					case SDLK_1:
 						tile_id = tile_ids["fence.png"];
@@ -164,7 +162,7 @@ void tile_demo(SDL_Window *win){
 						tile_id = tile_ids["box.png"];
 						break;
 				}
-				auto buffer = tiles.buffer();
+				auto &buffer = tiles.buffer();
 				buffer.map(GL_WRITE_ONLY);
 				buffer.write<1>(0) = tile_id;
 				buffer.unmap();

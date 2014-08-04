@@ -17,7 +17,7 @@
 template<typename... Attribs>
 class RenderBatch {
 	size_t size;
-	Model model;
+	std::shared_ptr<Model> model;
 	InterleavedBuffer<Layout::PACKED, Attribs...> attributes;
 	std::array<int, sizeof...(Attribs)> indices;
 
@@ -38,8 +38,8 @@ public:
 	/*
 	 * Create a render batch with some capacity for the passed in model
 	 */
-	RenderBatch(size_t capacity, Model model) : size(0), model(model),
-		attributes(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW)
+	RenderBatch(size_t capacity, const std::shared_ptr<Model> &model) : size(0), model(model),
+		attributes(capacity, GL_ARRAY_BUFFER, GL_STREAM_DRAW, true)
 	{
 		indices.fill(-1);
 	}
@@ -142,7 +142,7 @@ public:
 	 */
 	void set_attrib_indices(const std::array<int, sizeof...(Attribs)> &i){
 		indices = i;
-		model.bind();
+		model->bind();
 		attributes.bind();
 		set_attrib_index<Attribs...>();
 		//Something is trampling state after this call on the letters. Perhaps in model loading?
@@ -152,8 +152,8 @@ public:
 	 * Render the batch
 	 */
 	void render(){
-		model.bind();
-		glDrawElementsInstanced(GL_TRIANGLES, model.elems(), GL_UNSIGNED_SHORT, 0, size);
+		model->bind();
+		glDrawElementsInstanced(GL_TRIANGLES, model->elems(), GL_UNSIGNED_SHORT, 0, size);
 	}
 	size_t batch_size() const {
 		return size;
