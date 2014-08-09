@@ -158,6 +158,9 @@ public:
 	size_t batch_size() const {
 		return size;
 	}
+	size_t batch_capacity() const {
+		return attributes.size();
+	}
 
 private:
 	//Resize the instance data buffer capacity to some new size
