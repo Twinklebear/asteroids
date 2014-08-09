@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <tuple>
 #include <array>
 #include <string>
@@ -73,7 +74,6 @@ int main(int argc, char **argv){
 	return 0;
 }
 void run(SDL_Window *win){
-
 	Level level;
 	level.start();
 	while (!level.should_quit()){
@@ -127,10 +127,36 @@ void tile_demo(SDL_Window *win){
 	GLuint tile_uvs_sampler = glGetUniformLocation(shader, "uvs");
 	glUniform1i(tile_uvs_sampler, 1);
 
+	std::stringstream map{"6 5\n_xx_x_\nox__xo\nxx_oox\nxo_oox\nxxxoo_"};
+	size_t w, h;
+	map >> w >> h;
+
 	//Tiles are positioned by a full transformation matrix and the tile type is specified
 	//by an int id
-	RenderBatch<glm::mat4, int> tiles{1, std::make_shared<Model>(res_path + "quad.obj")};
-	tiles.push_back(std::make_tuple(glm::scale(glm::vec3{3.2, 3.2, 1}), tile_ids["fence.png"]));
+	RenderBatch<glm::mat4, int> tiles{w * h, std::make_shared<Model>(res_path + "quad.obj")};
+	glm::vec3 pos{w * -1.6f, h * 1.6f, 0};
+	std::istream_iterator<char> iter{map};
+	for (size_t i = 0; i < tiles.batch_capacity(); ++i){
+		if (i > 0 && i % w == 0){
+			pos.x = w * -1.6f;
+			pos.y -= 3.2f;
+		}
+		int tile_id = -1;
+		switch (*iter){
+			case 'x':
+				tile_id = tile_ids["grass.png"];
+				break;
+			case 'o':
+				tile_id = tile_ids["dirt.png"];
+				break;
+		}
+		++iter;
+		if (tile_id > -1){
+			tiles.push_back(std::make_tuple(glm::translate(pos)
+				* glm::scale(glm::vec3{1.6f, 1.6f, 1}), tile_id));
+		}
+		pos.x += 3.2f;
+	}
 	tiles.set_attrib_indices(std::array<int, 2>{3, 7});
 
 	bool quit = false;
