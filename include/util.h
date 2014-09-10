@@ -86,9 +86,10 @@ namespace util {
 	glm::vec2 capture_vec2(const std::string &str);
 	glm::vec3 capture_vec3(const std::string &str);
 	/*
-	* Get the vertex informaton for a face as an array of 3 strings
+	* Get the vertex informaton for a face as an array of strings containing
+	* the face data. 3 are returned for tri faces, 4 for quad faces
 	*/
-	std::array<std::string, 3> capture_faces(const std::string &str);
+	std::vector<std::string> capture_faces(const std::string &str);
 	/*
 	* Capture the indices of the vertex components, the array contains the
 	* face information: v/vt/vn

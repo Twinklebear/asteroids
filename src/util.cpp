@@ -1,4 +1,5 @@
 #include <vector>
+#include <regex>
 #include <array>
 #include <map>
 #include <iostream>
@@ -356,7 +357,12 @@ bool util::load_obj(const std::string &fname,
 		}
 		//Parse faces
 		else if (line.at(0) == 'f'){
-			std::array<std::string, 3> face = capture_faces(line);
+			std::vector<std::string> face = capture_faces(line);
+			//Triangulate quad faces
+			if (face.size() == 4){
+				face.push_back(face.at(0));
+				face.push_back(face.at(2));
+			}
 			for (std::string &v : face){
 				auto fnd = vert_indices.find(v);
 				//If we find the vertex already in the list re-use the index
@@ -406,16 +412,14 @@ glm::vec3 util::capture_vec3(const std::string &str){
 	sscanf(str.c_str(), "%*s %f %f %f", &vec.x, &vec.y, &vec.z);
 	return vec;
 }
-std::array<std::string, 3> util::capture_faces(const std::string &str){
-	std::array<std::string, 3> faces;
-	//There's face information between each space in the string, and 3 faces total
-	size_t prev = str.find(" ", 0);
-	size_t next = prev;
-	for (std::string &face : faces){
-		next = str.find(" ", prev + 1);
-		face = str.substr(prev + 1, next - prev - 1);
-		prev = next;
-	}
+std::vector<std::string> util::capture_faces(const std::string &str){
+	std::regex match_vert("([0-9]+)/([0-9]+)/([0-9]+)");
+	std::vector<std::string> faces;
+	std::transform(std::sregex_iterator{str.begin(), str.end(), match_vert},
+		std::sregex_iterator{}, std::back_inserter(faces),
+		[](const std::smatch &m){
+			return m.str();
+		});
 	return faces;
 }
 std::array<unsigned int, 3> util::capture_vertex(const std::string &str){
