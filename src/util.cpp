@@ -27,7 +27,7 @@ std::string util::get_resource_path(const std::string &sub_dir){
 			return "";
 		}
 		//The final part of the string should be bin/ so replace it with res/
-		size_t pos = base_res.find_last_of("bin") - 2;
+		size_t pos = base_res.rfind("bin");
 		base_res = base_res.substr(0, pos) + "res" + PATH_SEP;
 	}
 	if (sub_dir.empty()){

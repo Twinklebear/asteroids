@@ -1,6 +1,8 @@
 Asteroids
 =
 An over-engineered implementation of Asteroids. Also making use of some of [Kenny.nl](http://www.kenney.nl/)'s great art.
+Note that this is not currently a running implementation of any game as it devolved into some OpenGL fiddling stuff,
+although I'll try to make it into Asteroids "soon" :).
 
 Dependencies
 -
