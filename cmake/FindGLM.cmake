@@ -6,6 +6,7 @@
 
 find_path(GLM_INCLUDE_DIR glm/glm.hpp
 	HINTS $ENV{GLM}
+	${GLM}
 	PATH_SUFFIXES glm
 )
 
