@@ -20,7 +20,12 @@ ExternalProject_Add(entityx
 )
 
 set(tinyxml2_DIR "${Asteroids_SOURCE_DIR}/external/tinyxml2")
-set(tinyxml2_LIBRARY "${tinyxml2_DIR}/lib/libtinyxml2.a")
+if (UNIX)
+	set(tinyxml2_LIBRARY "${tinyxml2_DIR}/lib/libtinyxml2.so")
+else()
+	# Assumes you're building with MinGW on Windows
+	set(tinyxml2_LIBRARY "${tinyxml2_DIR}/lib/libtinyxml2.a")
+endif()
 set(tinyxml2_INCLUDE_DIR "${tinyxml2_DIR}/include")
 ExternalProject_Add(tinyxml2
 	PREFIX ${tinyxml2_DIR}
